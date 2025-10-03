@@ -16,8 +16,8 @@ import (
 
 // Run with: go test -race -run Race
 
-func TestRace_Concurrentergon.Enqueue(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+func TestRace_ConcurrentEnqueue(t *testing.T) {
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -57,7 +57,7 @@ func TestRace_Concurrentergon.Enqueue(t *testing.T) {
 }
 
 func TestRace_ConcurrentDequeue(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -113,7 +113,7 @@ func TestRace_ConcurrentDequeue(t *testing.T) {
 }
 
 func TestRace_ConcurrentStateChanges(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -178,7 +178,7 @@ func TestRace_WorkerRegistration(t *testing.T) {
 				}
 			}()
 
-			ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+			ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 				return nil
 			})
 		}()
@@ -204,7 +204,7 @@ func TestRace_WorkerRegistration(t *testing.T) {
 }
 
 func TestRace_QueuePauseResume(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	var wg sync.WaitGroup
@@ -236,7 +236,7 @@ func TestRace_QueuePauseResume(t *testing.T) {
 }
 
 func TestRace_ConcurrentUpdate(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -286,7 +286,7 @@ func TestRace_ConcurrentUpdate(t *testing.T) {
 }
 
 func TestRace_ConcurrentListAndModify(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -361,7 +361,7 @@ func TestRace_ConcurrentListAndModify(t *testing.T) {
 }
 
 func TestRace_ConcurrentGroupOperations(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -488,7 +488,7 @@ func TestRace_ServerStartStop(t *testing.T) {
 }
 
 func TestRace_ConcurrentMetadataAccess(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -544,7 +544,7 @@ func TestRace_ConcurrentMetadataAccess(t *testing.T) {
 }
 
 func TestRace_ConcurrentStoreOperations(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()

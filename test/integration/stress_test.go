@@ -14,12 +14,12 @@ import (
 	"github.com/hasanerken/ergon/store/mock"
 )
 
-func TestStress_HighVolume_ergon.Enqueue(t *testing.T) {
+func TestStress_HighVolume_Enqueue(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping stress test in short mode")
 	}
 
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -50,12 +50,12 @@ func TestStress_HighVolume_ergon.Enqueue(t *testing.T) {
 	}
 }
 
-func TestStress_Concurrentergon.Enqueue(t *testing.T) {
+func TestStress_ConcurrentEnqueue(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping stress test in short mode")
 	}
 
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -129,7 +129,7 @@ func TestStress_HighThroughput_Processing(t *testing.T) {
 	var processed atomic.Int64
 
 	workers := ergon.NewWorkers()
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 		processed.Add(1)
 		// Simulate minimal work
 		time.Sleep(1 * time.Millisecond)
@@ -189,7 +189,7 @@ func TestStress_MixedWorkload(t *testing.T) {
 		t.Skip("skipping stress test in short mode")
 	}
 
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -274,7 +274,7 @@ func TestStress_BatchOperations(t *testing.T) {
 		t.Skip("skipping stress test in short mode")
 	}
 
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -334,7 +334,7 @@ func TestStress_QueueSaturation(t *testing.T) {
 	var maxConcurrent atomic.Int64
 
 	workers := ergon.NewWorkers()
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 		current := started.Add(1)
 
 		// Track max concurrent
@@ -406,7 +406,7 @@ func TestStress_MemoryUsage(t *testing.T) {
 		t.Skip("skipping stress test in short mode")
 	}
 
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -448,7 +448,7 @@ func TestStress_MemoryUsage(t *testing.T) {
 }
 
 func Benchmarkergon.Enqueue(b *testing.B) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -465,7 +465,7 @@ func Benchmarkergon.Enqueue(b *testing.B) {
 }
 
 func BenchmarkEnqueueParallel(b *testing.B) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -484,7 +484,7 @@ func BenchmarkEnqueueParallel(b *testing.B) {
 }
 
 func BenchmarkDequeue(b *testing.B) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -506,7 +506,7 @@ func BenchmarkDequeue(b *testing.B) {
 }
 
 func Benchmarkergon.EnqueueMany(b *testing.B) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()

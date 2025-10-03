@@ -19,14 +19,14 @@ func TestIntegration_Badger_EndToEnd(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-	store := helper.NewBadgerergon.Store()
+	store := helper.NewBadgerStore()
 	ctx := context.Background()
 
 	// Create workers
 	workers := ergon.NewWorkers()
 	executed := make(chan string, 10)
 
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 		executed <- task.Args.Message
 		return nil
 	})
@@ -94,16 +94,13 @@ func TestIntegration_Badger_MultipleQueues(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-	store := helper.NewBadgerergon.Store()
-
-	}
 
 	ctx := context.Background()
 
 	workers := ergon.NewWorkers()
 	executed := make(chan string, 100)
 
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 		executed <- task.Queue + ":" + task.Args.Message
 		return nil
 	})
@@ -174,16 +171,13 @@ func TestIntegration_Badger_Retry(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-	store := helper.NewBadgerergon.Store()
-
-	}
 
 	ctx := context.Background()
 
 	workers := ergon.NewWorkers()
 	attempts := 0
 
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[FailingTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[FailingTaskArgs]) error {
 		attempts++
 		if attempts < 3 {
 			return errors.New("temporary error")
@@ -241,16 +235,13 @@ func TestIntegration_Badger_Scheduling(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-	store := helper.NewBadgerergon.Store()
-
-	}
 
 	ctx := context.Background()
 
 	workers := ergon.NewWorkers()
 	executed := make(chan time.Time, 10)
 
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 		executed <- time.Now()
 		return nil
 	})
@@ -315,9 +306,6 @@ func TestIntegration_Badger_Uniqueness(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-	store := helper.NewBadgerergon.Store()
-
-	}
 
 	ctx := context.Background()
 
@@ -357,16 +345,13 @@ func TestIntegration_Badger_PauseResume(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-	store := helper.NewBadgerergon.Store()
-
-	}
 
 	ctx := context.Background()
 
 	workers := ergon.NewWorkers()
 	executed := make(chan string, 10)
 
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 		executed <- task.Args.Message
 		return nil
 	})
@@ -436,9 +421,6 @@ func TestIntegration_Badger_Middleware(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-	store := helper.NewBadgerergon.Store()
-
-	}
 
 	ctx := context.Background()
 
@@ -491,7 +473,7 @@ func TestIntegration_Badger_Middleware(t *testing.T) {
 	_ = server.Stop(shutdownCtx)
 }
 
-func TestIntegration_Badger_Batchergon.Enqueue(t *testing.T) {
+func TestIntegration_Badger_BatchEnqueue(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
@@ -499,16 +481,13 @@ func TestIntegration_Badger_Batchergon.Enqueue(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-	store := helper.NewBadgerergon.Store()
-
-	}
 
 	ctx := context.Background()
 
 	workers := ergon.NewWorkers()
 	executed := make(chan string, 100)
 
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 		executed <- task.Args.Message
 		return nil
 	})

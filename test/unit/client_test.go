@@ -10,8 +10,8 @@ import (
 	"github.com/hasanerken/ergon/store/mock"
 )
 
-func TestClient_ergon.Enqueue(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+func TestClient_Enqueue(t *testing.T) {
+	store := mock.NewPostgresStore()
 	workers := CreateTestWorkers()
 	client := ergon.NewClient(store, ergon.ClientConfig{
 		DefaultQueue:   "default",
@@ -136,8 +136,8 @@ func TestClient_ergon.Enqueue(t *testing.T) {
 	})
 }
 
-func TestClient_ergon.EnqueueMany(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+func TestClient_EnqueueMany(t *testing.T) {
+	store := mock.NewPostgresStore()
 	workers := CreateTestWorkers()
 	client := ergon.NewClient(store, ergon.ClientConfig{Workers: workers})
 
@@ -171,7 +171,7 @@ func TestClient_ergon.EnqueueMany(t *testing.T) {
 }
 
 func TestClient_WorkerValidation(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	workers := CreateTestWorkers()
 
 	client := ergon.NewClient(store, ergon.ClientConfig{
@@ -212,7 +212,7 @@ func TestClient_WorkerValidation(t *testing.T) {
 }
 
 func TestClient_CancelTask(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	workers := CreateTestWorkers()
 	client := ergon.NewClient(store, ergon.ClientConfig{Workers: workers})
 
@@ -234,7 +234,7 @@ func TestClient_CancelTask(t *testing.T) {
 }
 
 func TestClient_DeleteTask(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	workers := CreateTestWorkers()
 	client := ergon.NewClient(store, ergon.ClientConfig{Workers: workers})
 
@@ -254,7 +254,7 @@ func TestClient_DeleteTask(t *testing.T) {
 }
 
 func TestClient_QueueManagement(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	client := ergon.NewClient(store, ergon.ClientConfig{})
 
 	ctx := context.Background()
@@ -285,7 +285,7 @@ func TestClient_QueueManagement(t *testing.T) {
 }
 
 func TestClient_CompositeOptions(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	workers := CreateTestWorkers()
 	client := ergon.NewClient(store, ergon.ClientConfig{Workers: workers})
 

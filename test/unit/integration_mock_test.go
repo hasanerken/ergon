@@ -11,7 +11,7 @@ import (
 )
 
 func TestIntegration_Mock_BasicWorkflow(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -54,7 +54,7 @@ func TestIntegration_Mock_BasicWorkflow(t *testing.T) {
 }
 
 func TestIntegration_Mock_TaskStates(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -65,15 +65,15 @@ func TestIntegration_Mock_TaskStates(t *testing.T) {
 		task, err := ergon.Enqueue(client, ctx, TestTaskArgs{Message: "success"})
 		AssertNoError(t, err, "enqueue failed")
 
-		Assertergon.TaskState(t, store, task.ID, ergon.StatePending)
+		AssertTaskState(t, store, task.ID, ergon.StatePending)
 
 		err = store.MarkRunning(ctx, task.ID, "worker-1")
 		AssertNoError(t, err, "mark running failed")
-		Assertergon.TaskState(t, store, task.ID, ergon.StateRunning)
+		AssertTaskState(t, store, task.ID, ergon.StateRunning)
 
 		err = store.MarkCompleted(ctx, task.ID, nil)
 		AssertNoError(t, err, "mark completed failed")
-		Assertergon.TaskState(t, store, task.ID, ergon.StateCompleted)
+		AssertTaskState(t, store, task.ID, ergon.StateCompleted)
 	})
 
 	// Test pending -> running -> failed
@@ -86,7 +86,7 @@ func TestIntegration_Mock_TaskStates(t *testing.T) {
 
 		err = store.MarkFailed(ctx, task.ID, errors.New("test error"))
 		AssertNoError(t, err, "mark failed failed")
-		Assertergon.TaskState(t, store, task.ID, ergon.StateFailed)
+		AssertTaskState(t, store, task.ID, ergon.StateFailed)
 
 		// Verify error message
 		failed, err := store.GetTask(ctx, task.ID)
@@ -103,7 +103,7 @@ func TestIntegration_Mock_TaskStates(t *testing.T) {
 
 		err = store.MarkCancelled(ctx, task.ID)
 		AssertNoError(t, err, "mark cancelled failed")
-		Assertergon.TaskState(t, store, task.ID, ergon.StateCancelled)
+		AssertTaskState(t, store, task.ID, ergon.StateCancelled)
 	})
 
 	// Test retry path
@@ -131,7 +131,7 @@ func TestIntegration_Mock_TaskStates(t *testing.T) {
 }
 
 func TestIntegration_Mock_QueuePriority(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -171,7 +171,7 @@ func TestIntegration_Mock_QueuePriority(t *testing.T) {
 }
 
 func TestIntegration_Mock_Scheduling(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -184,7 +184,7 @@ func TestIntegration_Mock_Scheduling(t *testing.T) {
 	)
 	AssertNoError(t, err, "enqueue failed")
 
-	Assertergon.TaskState(t, store, task.ID, ergon.StateScheduled)
+	AssertTaskState(t, store, task.ID, ergon.StateScheduled)
 
 	// Should not be dequeued yet
 	_, err = store.Dequeue(ctx, []string{"default"}, "worker-1")
@@ -210,7 +210,7 @@ func TestIntegration_Mock_Scheduling(t *testing.T) {
 }
 
 func TestIntegration_Mock_ListTasks(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -260,7 +260,7 @@ func TestIntegration_Mock_ListTasks(t *testing.T) {
 }
 
 func TestIntegration_Mock_CountTasks(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -303,7 +303,7 @@ func TestIntegration_Mock_CountTasks(t *testing.T) {
 }
 
 func TestIntegration_Mock_QueueInfo(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -340,7 +340,7 @@ func TestIntegration_Mock_QueueInfo(t *testing.T) {
 }
 
 func TestIntegration_Mock_UpdateTask(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -380,7 +380,7 @@ func TestIntegration_Mock_UpdateTask(t *testing.T) {
 }
 
 func TestIntegration_Mock_DeleteTask(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -409,7 +409,7 @@ func TestIntegration_Mock_DeleteTask(t *testing.T) {
 }
 
 func TestIntegration_Mock_RecoverStuckTasks(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -437,11 +437,11 @@ func TestIntegration_Mock_RecoverStuckTasks(t *testing.T) {
 	}
 
 	// Verify task is pending again
-	Assertergon.TaskState(t, store, task.ID, ergon.StatePending)
+	AssertTaskState(t, store, task.ID, ergon.StatePending)
 }
 
 func TestIntegration_Mock_Groups(t *testing.T) {
-	store := mock.NewPostgresergon.Store()
+	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -463,8 +463,8 @@ func TestIntegration_Mock_Groups(t *testing.T) {
 	}
 
 	// Verify tasks are in aggregating state
-	Assertergon.TaskState(t, store, task1.ID, ergon.StateAggregating)
-	Assertergon.TaskState(t, store, task2.ID, ergon.StateAggregating)
+	AssertTaskState(t, store, task1.ID, ergon.StateAggregating)
+	AssertTaskState(t, store, task2.ID, ergon.StateAggregating)
 
 	// Consume group
 	consumed, err := store.ConsumeGroup(ctx, "group:1")

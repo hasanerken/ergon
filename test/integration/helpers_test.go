@@ -41,8 +41,8 @@ func (h *TestHelper) TempDir() string {
 	return h.t.TempDir()
 }
 
-// NewBadgerergon.Store creates a BadgerDB store for testing
-func (h *TestHelper) NewBadgerergon.Store() ergon.Store {
+// NewBadgerStore creates a BadgerDB store for testing
+func (h *TestHelper) NewBadgerStore() ergon.Store {
 	tempDir := h.t.TempDir()
 	store, err := badger.Newergon.Store(filepath.Join(tempDir, "queue_data"))
 	if err != nil {
@@ -57,13 +57,13 @@ func (h *TestHelper) NewBadgerergon.Store() ergon.Store {
 // CreateTestWorkers creates test workers
 func CreateTestWorkers() *ergon.Workers {
 	workers := ergon.NewWorkers()
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 		return nil
 	})
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[FailingTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[FailingTaskArgs]) error {
 		return task.Args.Error
 	})
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[SlowTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[SlowTaskArgs]) error {
 		time.Sleep(task.Args.Duration)
 		return nil
 	})

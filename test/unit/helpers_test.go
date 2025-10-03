@@ -11,13 +11,13 @@ import (
 // CreateTestWorkers creates test workers
 func CreateTestWorkers() *ergon.Workers {
 	workers := ergon.NewWorkers()
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 		return nil
 	})
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[FailingTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[FailingTaskArgs]) error {
 		return task.Args.Error
 	})
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[SlowTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[SlowTaskArgs]) error {
 		time.Sleep(task.Args.Duration)
 		return nil
 	})
@@ -58,8 +58,8 @@ func AssertError(t *testing.T, err error, message string) {
 	}
 }
 
-// Assertergon.TaskState checks if a task is in the expected state
-func Assertergon.TaskState(t *testing.T, store ergon.Store, taskID string, expectedState ergon.TaskState) {
+// AssertTaskState checks if a task is in the expected state
+func AssertTaskState(t *testing.T, store ergon.Store, taskID string, expectedState ergon.TaskState) {
 	task, err := store.GetTask(context.Background(), taskID)
 	if err != nil {
 		t.Fatalf("failed to get task %s: %v", taskID, err)

@@ -7,11 +7,11 @@ import (
 	"time"
 )
 
-func TestWorkers_ergon.AddWorker(t *testing.T) {
+func TestWorkers_AddWorker(t *testing.T) {
 	workers := ergon.NewWorkers()
 
 	t.Run("add simple worker", func(t *testing.T) {
-		ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+		ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 			return nil
 		})
 
@@ -24,7 +24,7 @@ func TestWorkers_ergon.AddWorker(t *testing.T) {
 		workers := ergon.NewWorkers()
 
 		// Add first worker
-		ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+		ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 			return nil
 		})
 
@@ -35,7 +35,7 @@ func TestWorkers_ergon.AddWorker(t *testing.T) {
 			}
 		}()
 
-		ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+		ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 			return nil
 		})
 	})
@@ -43,7 +43,7 @@ func TestWorkers_ergon.AddWorker(t *testing.T) {
 	t.Run("get worker entry", func(t *testing.T) {
 		workers := ergon.NewWorkers()
 
-		ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+		ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 			return nil
 		})
 
@@ -60,11 +60,11 @@ func TestWorkers_ergon.AddWorker(t *testing.T) {
 	t.Run("list worker kinds", func(t *testing.T) {
 		workers := ergon.NewWorkers()
 
-		ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+		ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 			return nil
 		})
 
-		ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[FailingTaskArgs]) error {
+		ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[FailingTaskArgs]) error {
 			return task.Args.Error
 		})
 
@@ -90,20 +90,20 @@ func TestWorkers_ergon.AddWorker(t *testing.T) {
 	})
 }
 
+type TimeoutWorker struct {
+	ergon.WorkerDefaults[TestTaskArgs]
+	timeout time.Duration
+}
+
+func (w *TimeoutWorker) Work(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+	return nil
+}
+
+func (w *TimeoutWorker) Timeout(task *ergon.Task[TestTaskArgs]) time.Duration {
+	return w.timeout
+}
+
 func TestWorker_WithTimeout(t *testing.T) {
-	type TimeoutWorker struct {
-		ergon.WorkerDefaults[TestTaskArgs]
-		timeout time.Duration
-	}
-
-	func (w *TimeoutWorker) Work(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
-		return nil
-	}
-
-	func (w *TimeoutWorker) Timeout(task *ergon.Task[TestTaskArgs]) time.Duration {
-		return w.timeout
-	}
-
 	workers := ergon.NewWorkers()
 	worker := &TimeoutWorker{timeout: 5 * time.Second}
 	ergon.AddWorker(workers, worker)
@@ -243,7 +243,7 @@ func TestWorker_TypeSafety(t *testing.T) {
 	workers := ergon.NewWorkers()
 
 	// Add typed worker
-	ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
+	ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[TestTaskArgs]) error {
 		// This should compile and provide type-safe access to Args
 		_ = task.Args.Message
 		return nil
@@ -282,7 +282,7 @@ func TestWorker_ConcurrentRegistration(t *testing.T) {
 			}
 			func (ConcurrentTask) Kind() string { return "concurrent" }
 
-			ergon.Addergon.WorkerFunc(workers, func(ctx context.Context, task *ergon.Task[ConcurrentTask]) error {
+			ergon.AddWorkerFunc(workers, func(ctx context.Context, task *ergon.Task[ConcurrentTask]) error {
 				return nil
 			})
 		}(i)
