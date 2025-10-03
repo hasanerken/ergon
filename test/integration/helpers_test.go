@@ -44,7 +44,7 @@ func (h *TestHelper) TempDir() string {
 // NewBadgerStore creates a BadgerDB store for testing
 func (h *TestHelper) NewBadgerStore() ergon.Store {
 	tempDir := h.t.TempDir()
-	store, err := badger.Newergon.Store(filepath.Join(tempDir, "queue_data"))
+	store, err := badger.NewStore(filepath.Join(tempDir, "queue_data"))
 	if err != nil {
 		h.t.Fatalf("failed to create badger store: %v", err)
 	}
@@ -90,8 +90,8 @@ type SlowTaskArgs struct {
 
 func (SlowTaskArgs) Kind() string { return "slow_task" }
 
-// WaitForergon.TaskState waits for a task to reach expected state
-func WaitForergon.TaskState(t *testing.T, store ergon.Store, taskID string, expectedState ergon.TaskState, timeout time.Duration) *ergon.InternalTask {
+// WaitForTaskState waits for a task to reach expected state
+func WaitForTaskState(t *testing.T, store ergon.Store, taskID string, expectedState ergon.TaskState, timeout time.Duration) *ergon.InternalTask {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

@@ -82,8 +82,8 @@ func TestClient_Enqueue(t *testing.T) {
 
 	t.Run("enqueue with metadata", func(t *testing.T) {
 		task, err := ergon.Enqueue(client, ctx, TestTaskArgs{Message: "metadata"},
-			WithMetadata("user_id", "123"),
-			WithMetadata("request_id", "abc"),
+			ergon.WithMetadata("user_id", "123"),
+			ergon.WithMetadata("request_id", "abc"),
 		)
 		AssertNoError(t, err, "enqueue failed")
 
@@ -186,13 +186,6 @@ func TestClient_WorkerValidation(t *testing.T) {
 	})
 
 	t.Run("invalid worker kind", func(t *testing.T) {
-		type UnknownTask struct {
-			Data string
-		}
-		unknownTask := struct {
-			Data string
-		}{Data: "test"}
-
 		// This won't compile because UnknownTask doesn't implement TaskArgs
 		// So we simulate by using client without validation
 		clientNoValidation := ergon.NewClient(store, ergon.ClientConfig{
@@ -293,12 +286,12 @@ func TestClient_CompositeOptions(t *testing.T) {
 
 	t.Run("AtMostOncePerHour", func(t *testing.T) {
 		task1, err := ergon.Enqueue(client, ctx, TestTaskArgs{Message: "once"},
-			AtMostOncePerHour(),
+			ergon.AtMostOncePerHour(),
 		)
 		AssertNoError(t, err, "first enqueue failed")
 
 		_, err = ergon.Enqueue(client, ctx, TestTaskArgs{Message: "once"},
-			AtMostOncePerHour(),
+			ergon.AtMostOncePerHour(),
 		)
 		if !errors.Is(err, ergon.ErrDuplicateTask) {
 			t.Error("duplicate should be rejected")
@@ -311,12 +304,12 @@ func TestClient_CompositeOptions(t *testing.T) {
 
 	t.Run("AtMostOncePerDay", func(t *testing.T) {
 		task1, err := ergon.Enqueue(client, ctx, TestTaskArgs{Message: "daily"},
-			AtMostOncePerDay(),
+			ergon.AtMostOncePerDay(),
 		)
 		AssertNoError(t, err, "first enqueue failed")
 
 		_, err = ergon.Enqueue(client, ctx, TestTaskArgs{Message: "daily"},
-			AtMostOncePerDay(),
+			ergon.AtMostOncePerDay(),
 		)
 		if !errors.Is(err, ergon.ErrDuplicateTask) {
 			t.Error("duplicate should be rejected")
@@ -329,7 +322,7 @@ func TestClient_CompositeOptions(t *testing.T) {
 
 	t.Run("WithNoRetry", func(t *testing.T) {
 		task, err := ergon.Enqueue(client, ctx, TestTaskArgs{Message: "no-retry"},
-			WithNoRetry(),
+			ergon.WithNoRetry(),
 		)
 		AssertNoError(t, err, "enqueue failed")
 
@@ -340,7 +333,7 @@ func TestClient_CompositeOptions(t *testing.T) {
 
 	t.Run("WithRetryOnce", func(t *testing.T) {
 		task, err := ergon.Enqueue(client, ctx, TestTaskArgs{Message: "retry-once"},
-			WithRetryOnce(),
+			ergon.WithRetryOnce(),
 		)
 		AssertNoError(t, err, "enqueue failed")
 

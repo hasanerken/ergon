@@ -1,7 +1,6 @@
 package integration_test
 
 import (
-	"github.com/hasanerken/ergon"
 	"context"
 	"fmt"
 	"path/filepath"
@@ -9,6 +8,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/hasanerken/ergon"
 
 	"github.com/hasanerken/ergon/store/badger"
 	"github.com/hasanerken/ergon/store/mock"
@@ -93,7 +94,7 @@ func TestRace_ConcurrentDequeue(t *testing.T) {
 				}
 
 				// Check for duplicate dequeue
-				if _, exists := taskIDs.LoadOrergon.Store(task.ID, true); exists {
+				if _, exists := taskIDs.LoadOrStore(task.ID, true); exists {
 					t.Errorf("task %s dequeued multiple times!", task.ID)
 				}
 
@@ -226,7 +227,7 @@ func TestRace_QueuePauseResume(t *testing.T) {
 	wg.Wait()
 
 	// Queue should be in a valid state
-	info, err := store.Getergon.QueueInfo(ctx, "test-queue")
+	info, err := store.GetQueueInfo(ctx, "test-queue")
 	AssertNoError(t, err, "get queue info failed")
 
 	// State should be either paused or not paused (not corrupted)
@@ -424,7 +425,7 @@ func TestRace_ServerStartStop(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-	store, err := badger.Newergon.Store(filepath.Join(helper.TempDir(), "queue_data"))
+	store, err := badger.NewStore(filepath.Join(helper.TempDir(), "queue_data"))
 	if err != nil {
 		t.Fatalf("failed to create store: %v", err)
 	}

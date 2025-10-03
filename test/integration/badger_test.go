@@ -1,14 +1,12 @@
 package integration_test
 
 import (
-	"github.com/hasanerken/ergon"
 	"context"
 	"errors"
-	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/hasanerken/ergon/store/badger"
+	"github.com/hasanerken/ergon"
 )
 
 func TestIntegration_Badger_EndToEnd(t *testing.T) {
@@ -74,7 +72,7 @@ func TestIntegration_Badger_EndToEnd(t *testing.T) {
 	}
 
 	// Verify task completed
-	completedTask := WaitForergon.TaskState(t, store, task.ID, ergon.StateCompleted, 2*time.Second)
+	completedTask := WaitForTaskState(t, store, task.ID, ergon.StateCompleted, 2*time.Second)
 	if completedTask.State != ergon.StateCompleted {
 		t.Errorf("expected state completed, got %s", completedTask.State)
 	}
@@ -94,7 +92,7 @@ func TestIntegration_Badger_MultipleQueues(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-
+	store := helper.NewBadgerStore()
 	ctx := context.Background()
 
 	workers := ergon.NewWorkers()
@@ -171,7 +169,7 @@ func TestIntegration_Badger_Retry(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-
+	store := helper.NewBadgerStore()
 	ctx := context.Background()
 
 	workers := ergon.NewWorkers()
@@ -216,7 +214,7 @@ func TestIntegration_Badger_Retry(t *testing.T) {
 	AssertNoError(t, err, "enqueue failed")
 
 	// Wait for task to complete after retries
-	WaitForergon.TaskState(t, store, task.ID, ergon.StateCompleted, 5*time.Second)
+	WaitForTaskState(t, store, task.ID, ergon.StateCompleted, 5*time.Second)
 
 	if attempts < 3 {
 		t.Errorf("expected at least 3 attempts, got %d", attempts)
@@ -235,7 +233,7 @@ func TestIntegration_Badger_Scheduling(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-
+	store := helper.NewBadgerStore()
 	ctx := context.Background()
 
 	workers := ergon.NewWorkers()
@@ -306,7 +304,7 @@ func TestIntegration_Badger_Uniqueness(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-
+	store := helper.NewBadgerStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -345,7 +343,7 @@ func TestIntegration_Badger_PauseResume(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-
+	store := helper.NewBadgerStore()
 	ctx := context.Background()
 
 	workers := ergon.NewWorkers()
@@ -421,7 +419,7 @@ func TestIntegration_Badger_Middleware(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-
+	store := helper.NewBadgerStore()
 	ctx := context.Background()
 
 	workers := CreateTestWorkers()
@@ -462,7 +460,7 @@ func TestIntegration_Badger_Middleware(t *testing.T) {
 	AssertNoError(t, err, "enqueue failed")
 
 	// Wait for completion
-	WaitForergon.TaskState(t, store, task.ID, ergon.StateCompleted, 2*time.Second)
+	WaitForTaskState(t, store, task.ID, ergon.StateCompleted, 2*time.Second)
 
 	if !middlewareCalled {
 		t.Error("middleware was not called")
@@ -481,7 +479,7 @@ func TestIntegration_Badger_BatchEnqueue(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-
+	store := helper.NewBadgerStore()
 	ctx := context.Background()
 
 	workers := ergon.NewWorkers()

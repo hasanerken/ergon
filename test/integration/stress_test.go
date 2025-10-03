@@ -116,7 +116,7 @@ func TestStress_HighThroughput_Processing(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-	store, err := badger.Newergon.Store(filepath.Join(helper.TempDir(), "queue_data"))
+	store, err := badger.NewStore(filepath.Join(helper.TempDir(), "queue_data"))
 	if err != nil {
 		t.Fatalf("failed to create store: %v", err)
 	}
@@ -320,7 +320,7 @@ func TestStress_QueueSaturation(t *testing.T) {
 	helper := NewTestHelper(t)
 	defer helper.Close()
 
-	store, err := badger.Newergon.Store(filepath.Join(helper.TempDir(), "queue_data"))
+	store, err := badger.NewStore(filepath.Join(helper.TempDir(), "queue_data"))
 	if err != nil {
 		t.Fatalf("failed to create store: %v", err)
 	}
@@ -447,7 +447,7 @@ func TestStress_MemoryUsage(t *testing.T) {
 	t.Logf("Processed %d total tasks across %d iterations", numIterations*tasksPerIteration, numIterations)
 }
 
-func Benchmarkergon.Enqueue(b *testing.B) {
+func BenchmarkEnqueue(b *testing.B) {
 	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
@@ -505,7 +505,7 @@ func BenchmarkDequeue(b *testing.B) {
 	}
 }
 
-func Benchmarkergon.EnqueueMany(b *testing.B) {
+func BenchmarkEnqueueMany(b *testing.B) {
 	store := mock.NewPostgresStore()
 	ctx := context.Background()
 
