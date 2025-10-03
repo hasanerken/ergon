@@ -3,12 +3,12 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/hasanerken/ergon"
+	"github.com/hasanerken/ergon/internal/jsonutil"
 	"github.com/lib/pq"
 )
 
@@ -59,14 +59,11 @@ func (s *Store) Enqueue(ctx context.Context, task *ergon.InternalTask) error {
 		)
 	`
 
-	payloadJSON, err := json.Marshal(json.RawMessage(task.Payload))
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
+	// Payload is already JSON bytes - no need to marshal again
 	var metadataJSON []byte
+	var err error
 	if task.Metadata != nil {
-		metadataJSON, err = json.Marshal(task.Metadata)
+		metadataJSON, err = jsonutil.Marshal(task.Metadata)
 		if err != nil {
 			return fmt.Errorf("failed to marshal metadata: %w", err)
 		}
@@ -89,7 +86,7 @@ func (s *Store) Enqueue(ctx context.Context, task *ergon.InternalTask) error {
 		int(task.Timeout.Seconds()),
 		task.ScheduledAt,
 		task.EnqueuedAt,
-		payloadJSON,
+		task.Payload, // Already JSON bytes
 		metadataJSON,
 		nullString(task.UniqueKey),
 		nullString(task.GroupKey),
@@ -138,14 +135,10 @@ func (s *Store) EnqueueMany(ctx context.Context, tasks []*ergon.InternalTask) er
 	defer stmt.Close()
 
 	for _, task := range tasks {
-		payloadJSON, err := json.Marshal(json.RawMessage(task.Payload))
-		if err != nil {
-			return fmt.Errorf("failed to marshal payload: %w", err)
-		}
-
 		var metadataJSON []byte
+		var err error
 		if task.Metadata != nil {
-			metadataJSON, err = json.Marshal(task.Metadata)
+			metadataJSON, err = jsonutil.Marshal(task.Metadata)
 			if err != nil {
 				return fmt.Errorf("failed to marshal metadata: %w", err)
 			}
@@ -160,7 +153,7 @@ func (s *Store) EnqueueMany(ctx context.Context, tasks []*ergon.InternalTask) er
 		_, err = stmt.ExecContext(ctx,
 			task.ID, task.Kind, task.Queue, task.State, task.Priority,
 			task.MaxRetries, task.Retried, int(task.Timeout.Seconds()),
-			task.ScheduledAt, task.EnqueuedAt, payloadJSON, metadataJSON,
+			task.ScheduledAt, task.EnqueuedAt, task.Payload, metadataJSON, // Payload already JSON
 			nullString(task.UniqueKey), nullString(task.GroupKey),
 			nullString(task.RateLimitScope), task.Recurring,
 			nullString(task.CronSchedule), intervalSeconds,
@@ -194,14 +187,13 @@ func (s *Store) EnqueueTx(ctx context.Context, tx ergon.Tx, task *ergon.Internal
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 	`
 
-	payloadJSON, err := json.Marshal(json.RawMessage(task.Payload))
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload: %w", err)
-	}
+	// Payload is already JSON - no double marshaling needed
+	payloadJSON := task.Payload
 
 	var metadataJSON []byte
+	var err error
 	if task.Metadata != nil {
-		metadataJSON, err = json.Marshal(task.Metadata)
+		metadataJSON, err = jsonutil.Marshal(task.Metadata)
 		if err != nil {
 			return fmt.Errorf("failed to marshal metadata: %w", err)
 		}
@@ -283,7 +275,7 @@ func (s *Store) Dequeue(ctx context.Context, queues []string, workerID string) (
 	task.Payload = payloadJSON
 
 	if len(metadataJSON) > 0 {
-		if err := json.Unmarshal(metadataJSON, &task.Metadata); err != nil {
+		if err := jsonutil.Unmarshal(metadataJSON, &task.Metadata); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
 		}
 	}
@@ -344,7 +336,7 @@ func (s *Store) GetTask(ctx context.Context, taskID string) (*ergon.InternalTask
 	task.Payload = payloadJSON
 
 	if len(metadataJSON) > 0 {
-		if err := json.Unmarshal(metadataJSON, &task.Metadata); err != nil {
+		if err := jsonutil.Unmarshal(metadataJSON, &task.Metadata); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
 		}
 	}
@@ -392,6 +384,11 @@ func (s *Store) Close() error {
 // Ping checks database connectivity
 func (s *Store) Ping(ctx context.Context) error {
 	return s.db.PingContext(ctx)
+}
+
+// GetDB returns the underlying database connection (for advanced usage)
+func (s *Store) GetDB() *sql.DB {
+	return s.db
 }
 
 // Helper functions

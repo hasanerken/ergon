@@ -3,11 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/hasanerken/ergon"
+	"github.com/hasanerken/ergon/internal/jsonutil"
 )
 
 // AddToGroup adds a task to an aggregation group
@@ -18,15 +18,10 @@ func (s *Store) AddToGroup(ctx context.Context, groupKey string, task *ergon.Int
 	}
 	defer tx.Rollback()
 
-	// Insert task
-	payloadJSON, err := json.Marshal(json.RawMessage(task.Payload))
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
+	// Insert task - payload is already JSON bytes
 	var metadataJSON []byte
 	if task.Metadata != nil {
-		metadataJSON, err = json.Marshal(task.Metadata)
+		metadataJSON, err = jsonutil.Marshal(task.Metadata)
 		if err != nil {
 			return fmt.Errorf("failed to marshal metadata: %w", err)
 		}
@@ -41,7 +36,7 @@ func (s *Store) AddToGroup(ctx context.Context, groupKey string, task *ergon.Int
 		) VALUES ($1, $2, $3, 'aggregating', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 	`, task.ID, task.Kind, task.Queue, task.Priority, task.MaxRetries, task.Retried,
 		int(task.Timeout.Seconds()), task.ScheduledAt, task.EnqueuedAt,
-		payloadJSON, metadataJSON, nullString(task.UniqueKey), groupKey,
+		task.Payload, metadataJSON, nullString(task.UniqueKey), groupKey,
 		nullString(task.RateLimitScope), task.Recurring,
 		nullString(task.CronSchedule), nil,
 	)
@@ -214,7 +209,7 @@ func scanTask(scanner interface {
 	task.Payload = payloadJSON
 
 	if len(metadataJSON) > 0 {
-		if err := json.Unmarshal(metadataJSON, &task.Metadata); err != nil {
+		if err := jsonutil.Unmarshal(metadataJSON, &task.Metadata); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
 		}
 	}

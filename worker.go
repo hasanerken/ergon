@@ -2,10 +2,11 @@ package ergon
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/hasanerken/ergon/internal/jsonutil"
 )
 
 // Worker processes tasks of a specific type
@@ -127,7 +128,7 @@ func wrapWorker[T TaskArgs](worker Worker[T]) WorkerFunc {
 // unmarshalTask converts internal task to typed task
 func unmarshalTask[T TaskArgs](task *InternalTask) *Task[T] {
 	var args T
-	if err := json.Unmarshal(task.Payload, &args); err != nil {
+	if err := jsonutil.Unmarshal(task.Payload, &args); err != nil {
 		// This should never happen if validation is done at enqueue time
 		panic(fmt.Sprintf("failed to unmarshal task payload for kind %q: %v", task.Kind, err))
 	}

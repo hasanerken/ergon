@@ -1,0 +1,78 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Dependency directories
+vendor/
+
+# Binary output directories
+bin/
+dist/
+
+# Compiled binaries in examples
+examples/*/main
+examples/comprehensive/comprehensive
+examples/stress/stress
+examples/stress/compare
+examples/basic/basic
+examples/batch/batch
+examples/postgres/postgres
+examples/statistics/statistics
+
+# BadgerDB database files
+*-badger-db/
+*.vlog
+*.mem
+DISCARD
+KEYREGISTRY
+LOCK
+MANIFEST
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Coverage reports
+coverage.txt
+coverage.html
+*.cover
+
+# Debug files
+debug
+debug.test
+__debug_bin

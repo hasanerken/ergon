@@ -2,11 +2,11 @@ package ergon
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hasanerken/ergon/internal/jsonutil"
 )
 
 // Client enqueues tasks to the queue
@@ -56,7 +56,7 @@ func Enqueue[T TaskArgs](c *Client, ctx context.Context, args T, opts ...Option)
 	}
 
 	// Marshal args
-	payload, err := json.Marshal(args)
+	payload, err := jsonutil.Marshal(args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal task args: %w", err)
 	}
@@ -161,7 +161,7 @@ func EnqueueTx[T TaskArgs](c *Client, ctx context.Context, tx Tx, args T, opts .
 	}
 
 	// Marshal args
-	payload, err := json.Marshal(args)
+	payload, err := jsonutil.Marshal(args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal task args: %w", err)
 	}
@@ -260,7 +260,7 @@ func EnqueueMany[T TaskArgs](c *Client, ctx context.Context, argsList []T, opts 
 		}
 
 		// Marshal args
-		payload, err := json.Marshal(args)
+		payload, err := jsonutil.Marshal(args)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal task args: %w", err)
 		}

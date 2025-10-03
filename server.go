@@ -109,6 +109,20 @@ func NewServer(store Store, cfg ServerConfig) (*Server, error) {
 		cfg.Middleware = append([]MiddlewareFunc{RecoveryMiddleware()}, cfg.Middleware...)
 	}
 
+	// Check worker count and warn if using BadgerDB with high concurrency
+	totalWorkers := 0
+	for _, queueCfg := range cfg.Queues {
+		totalWorkers += queueCfg.MaxWorkers
+	}
+
+	// Check if using BadgerDB (we check the type name)
+	storeType := fmt.Sprintf("%T", store)
+	if (storeType == "*badger.Store" || storeType == "badger.Store") && totalWorkers > 12 {
+		log.Printf("⚠️  WARNING: BadgerDB with %d workers may experience transaction conflicts under high concurrency.\n"+
+			"   For production workloads with >12 workers, consider using PostgreSQL for better performance.\n"+
+			"   BadgerDB is recommended for development or low-to-medium concurrency scenarios (<12 workers).", totalWorkers)
+	}
+
 	return &Server{
 		store:   store,
 		config:  cfg,
