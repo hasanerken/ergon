@@ -1,0 +1,121 @@
+{{define "task-modal"}}
+<div class="space-y-4">
+    <!-- Task Info -->
+    <div>
+        <div class="flex items-center space-x-2 mb-3">
+            <span class="text-2xl">
+                {{if eq .State "pending"}}⏳{{else if eq .State
+                "scheduled"}}📅{{else if eq .State "available"}}✅{{else if eq
+                .State "running"}}⚡{{else if eq .State "completed"}}✔️{{else if
+                eq .State "failed"}}❌{{else if eq .State "cancelled"}}🚫{{else
+                if eq .State "retrying"}}🔄{{end}}
+            </span>
+            <h3 class="text-xl font-semibold text-gray-900">{{.Kind}}</h3>
+            <span
+                class="inline-flex rounded-full px-3 py-1 text-sm font-semibold {{stateClass .State}}"
+            >
+                {{.State}}
+            </span>
+        </div>
+        <p class="text-sm text-gray-500 font-mono">{{.ID}}</p>
+    </div>
+
+    <!-- Payload -->
+    <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
+        <div class="flex items-center justify-between mb-3">
+            <h4
+                class="text-sm font-semibold text-gray-300 flex items-center gap-2"
+            >
+                <span
+                    class="iconify text-indigo-400"
+                    data-icon="mdi:code-json"
+                ></span>
+                Payload
+            </h4>
+            <button
+                onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.textContent)"
+                class="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded flex items-center gap-1 transition-colors"
+            >
+                <span class="iconify" data-icon="mdi:content-copy"></span>
+                Copy
+            </button>
+        </div>
+        <pre
+            class="text-sm text-green-400 font-mono overflow-x-auto whitespace-pre-wrap max-h-96 overflow-y-auto"
+        >
+{{formatJSON .Payload}}</pre
+        >
+    </div>
+
+    <!-- Task Details Grid -->
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="text-xs font-medium text-gray-500">Queue</label>
+            <p class="text-sm font-semibold text-gray-900">{{.Queue}}</p>
+        </div>
+        <div>
+            <label class="text-xs font-medium text-gray-500">Priority</label>
+            <p class="text-sm font-semibold text-gray-900">{{.Priority}}</p>
+        </div>
+        <div>
+            <label class="text-xs font-medium text-gray-500">Created At</label>
+            <p class="text-sm text-gray-900">{{formatTime .EnqueuedAt}}</p>
+        </div>
+        {{if .StartedAt}}
+        <div>
+            <label class="text-xs font-medium text-gray-500">Started At</label>
+            <p class="text-sm text-gray-900">{{formatTime .StartedAt}}</p>
+        </div>
+        {{end}} {{if .CompletedAt}}
+        <div>
+            <label class="text-xs font-medium text-gray-500"
+                >Completed At</label
+            >
+            <p class="text-sm text-gray-900">{{formatTime .CompletedAt}}</p>
+        </div>
+        {{end}} {{if .ScheduledAt}}
+        <div>
+            <label class="text-xs font-medium text-gray-500"
+                >Scheduled At</label
+            >
+            <p class="text-sm text-gray-900">{{formatTime .ScheduledAt}}</p>
+        </div>
+        {{end}}
+        <div>
+            <label class="text-xs font-medium text-gray-500">Retries</label>
+            <p class="text-sm text-gray-900">{{.Retried}} / {{.MaxRetries}}</p>
+        </div>
+        <div>
+            <label class="text-xs font-medium text-gray-500">Timeout</label>
+            <p class="text-sm text-gray-900">{{formatDuration .Timeout}}</p>
+        </div>
+    </div>
+
+    <!-- Error -->
+    {{if .Error}}
+    <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+        <h4 class="text-sm font-semibold text-red-800 mb-2">Error</h4>
+        <pre class="text-sm text-red-700 font-mono whitespace-pre-wrap">
+{{.Error}}</pre
+        >
+    </div>
+    {{end}}
+
+    <!-- Metadata -->
+    {{if .Metadata}}
+    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">Metadata</h4>
+        <dl class="grid grid-cols-1 gap-2">
+            {{range $key, $value := .Metadata}}
+            <div class="flex">
+                <dt class="text-sm font-medium text-gray-600 w-32">
+                    {{$key}}:
+                </dt>
+                <dd class="text-sm text-gray-900">{{$value}}</dd>
+            </div>
+            {{end}}
+        </dl>
+    </div>
+    {{end}}
+</div>
+{{end}}

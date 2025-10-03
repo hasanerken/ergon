@@ -1,0 +1,278 @@
+{{template "layout" .}} {{define "title"}}Task Detail{{end}} {{define
+"content"}}
+<div>
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="min-w-0 flex-1">
+            <h2
+                class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight"
+            >
+                Task Detail
+            </h2>
+        </div>
+        <div class="mt-4 flex space-x-3 md:ml-4 md:mt-0">
+            <a
+                href="/monitor/tasks"
+                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            >
+                Back to Tasks
+            </a>
+        </div>
+    </div>
+
+    <!-- Task Info Card -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+        <div class="px-4 py-5 sm:px-6 flex items-center justify-between">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    {{.Task.Kind}}
+                </h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500 font-mono">
+                    {{.Task.ID}}
+                </p>
+            </div>
+            <span
+                class="inline-flex rounded-full px-3 py-1 text-sm font-semibold leading-5 {{stateClass .Task.State}}"
+            >
+                {{.Task.State}}
+            </span>
+        </div>
+        <div class="border-t border-gray-200">
+            <dl>
+                <div
+                    class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+                >
+                    <dt class="text-sm font-medium text-gray-500">Queue</dt>
+                    <dd
+                        class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0"
+                    >
+                        {{.Task.Queue}}
+                    </dd>
+                </div>
+                <div
+                    class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+                >
+                    <dt class="text-sm font-medium text-gray-500">Priority</dt>
+                    <dd
+                        class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0"
+                    >
+                        {{.Task.Priority}}
+                    </dd>
+                </div>
+                <div
+                    class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+                >
+                    <dt class="text-sm font-medium text-gray-500">Retries</dt>
+                    <dd
+                        class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0"
+                    >
+                        {{.Task.Retries}} / {{.Task.MaxRetries}}
+                    </dd>
+                </div>
+                <div
+                    class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+                >
+                    <dt class="text-sm font-medium text-gray-500">Timeout</dt>
+                    <dd
+                        class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0"
+                    >
+                        {{formatDuration .Task.Timeout}}
+                    </dd>
+                </div>
+                <div
+                    class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+                >
+                    <dt class="text-sm font-medium text-gray-500">
+                        Created At
+                    </dt>
+                    <dd
+                        class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0"
+                    >
+                        {{formatTime .Task.CreatedAt}}
+                    </dd>
+                </div>
+                <div
+                    class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+                >
+                    <dt class="text-sm font-medium text-gray-500">
+                        Scheduled At
+                    </dt>
+                    <dd
+                        class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0"
+                    >
+                        {{formatTime .Task.ScheduledAt}}
+                    </dd>
+                </div>
+                <div
+                    class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+                >
+                    <dt class="text-sm font-medium text-gray-500">
+                        Started At
+                    </dt>
+                    <dd
+                        class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0"
+                    >
+                        {{formatTime .Task.StartedAt}}
+                    </dd>
+                </div>
+                <div
+                    class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+                >
+                    <dt class="text-sm font-medium text-gray-500">
+                        Completed At
+                    </dt>
+                    <dd
+                        class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0"
+                    >
+                        {{formatTime .Task.CompletedAt}}
+                    </dd>
+                </div>
+                {{if .Task.LastError}}
+                <div
+                    class="bg-red-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+                >
+                    <dt class="text-sm font-medium text-red-500">Last Error</dt>
+                    <dd
+                        class="mt-1 text-sm text-red-900 sm:col-span-2 sm:mt-0 font-mono"
+                    >
+                        {{.Task.LastError}}
+                    </dd>
+                </div>
+                {{end}}
+            </dl>
+        </div>
+    </div>
+
+    <!-- Payload -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+        <div class="px-4 py-5 sm:px-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Payload</h3>
+        </div>
+        <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <pre
+                class="bg-gray-50 p-4 rounded overflow-x-auto text-sm font-mono"
+            >
+{{formatJSON .Task.Payload}}</pre
+            >
+        </div>
+    </div>
+
+    <!-- Metadata -->
+    {{if .Task.Metadata}}
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+        <div class="px-4 py-5 sm:px-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                Metadata
+            </h3>
+        </div>
+        <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                {{range $key, $value := .Task.Metadata}}
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">{{$key}}</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{$value}}</dd>
+                </div>
+                {{end}}
+            </dl>
+        </div>
+    </div>
+    {{end}}
+
+    <!-- Actions -->
+    <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">
+                Actions
+            </h3>
+            <div class="flex space-x-3" id="actions-container">
+                {{if eq .Task.State "running"}}
+                <form
+                    hx-post="/monitor/api/tasks/cancel"
+                    hx-target="#actions-container"
+                    hx-swap="outerHTML"
+                >
+                    <input type="hidden" name="task_id" value="{{.Task.ID}}" />
+                    <button
+                        type="submit"
+                        class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500"
+                    >
+                        Cancel Task
+                    </button>
+                </form>
+                {{end}} {{if or (eq .Task.State "failed") (eq .Task.State
+                "cancelled")}}
+                <form
+                    hx-post="/monitor/api/tasks/retry"
+                    hx-target="#actions-container"
+                    hx-swap="outerHTML"
+                >
+                    <input type="hidden" name="task_id" value="{{.Task.ID}}" />
+                    <button
+                        type="submit"
+                        class="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500"
+                    >
+                        Retry Now
+                    </button>
+                </form>
+                {{end}} {{if or (eq .Task.State "pending") (eq .Task.State
+                "scheduled")}}
+                <button
+                    onclick="document.getElementById('reschedule-form').style.display = document.getElementById('reschedule-form').style.display === 'none' ? 'block' : 'none'"
+                    class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                >
+                    Reschedule
+                </button>
+                {{end}}
+
+                <form
+                    hx-post="/monitor/api/tasks/delete"
+                    hx-target="#actions-container"
+                    hx-swap="outerHTML"
+                    hx-confirm="Are you sure you want to delete this task?"
+                >
+                    <input type="hidden" name="task_id" value="{{.Task.ID}}" />
+                    <button
+                        type="submit"
+                        class="inline-flex items-center rounded-md bg-gray-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500"
+                    >
+                        Delete Task
+                    </button>
+                </form>
+            </div>
+
+            <!-- Reschedule Form -->
+            <div id="reschedule-form" style="display: none" class="mt-4">
+                <form
+                    hx-post="/monitor/api/tasks/reschedule"
+                    hx-target="#actions-container"
+                    hx-swap="outerHTML"
+                >
+                    <input type="hidden" name="task_id" value="{{.Task.ID}}" />
+                    <div class="flex items-end space-x-3">
+                        <div class="flex-1">
+                            <label
+                                for="scheduled_at"
+                                class="block text-sm font-medium text-gray-700"
+                                >New Schedule Time</label
+                            >
+                            <input
+                                type="datetime-local"
+                                name="scheduled_at"
+                                id="scheduled_at"
+                                required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                        >
+                            Update Schedule
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

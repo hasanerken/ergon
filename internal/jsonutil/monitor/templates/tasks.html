@@ -1,0 +1,196 @@
+{{template "layout" .}}
+
+{{define "title"}}Tasks{{end}}
+
+{{define "content"}}
+<div>
+    <!-- Stats Boxes Row -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <!-- Pending -->
+        <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+             onclick="window.location.href='?state=pending&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}'">
+            <div class="flex items-start justify-between mb-2">
+                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Pending</p>
+                <span class="iconify text-2xl text-blue-600" data-icon="mdi:clock-outline"></span>
+            </div>
+            <p class="text-2xl font-bold text-blue-700">{{range $state, $count := .StateCounts}}{{if eq $state "pending"}}{{$count}}{{end}}{{end}}</p>
+        </div>
+
+        <!-- Scheduled -->
+        <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+             onclick="window.location.href='?state=scheduled&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}'">
+            <div class="flex items-start justify-between mb-2">
+                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Scheduled</p>
+                <span class="iconify text-2xl text-purple-600" data-icon="mdi:calendar-clock"></span>
+            </div>
+            <p class="text-2xl font-bold text-purple-700">{{range $state, $count := .StateCounts}}{{if eq $state "scheduled"}}{{$count}}{{end}}{{end}}</p>
+        </div>
+
+        <!-- Running -->
+        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+             onclick="window.location.href='?state=running&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}'">
+            <div class="flex items-start justify-between mb-2">
+                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Running</p>
+                <span class="iconify text-2xl text-yellow-600" data-icon="mdi:lightning-bolt"></span>
+            </div>
+            <p class="text-2xl font-bold text-yellow-700">{{range $state, $count := .StateCounts}}{{if eq $state "running"}}{{$count}}{{end}}{{end}}</p>
+        </div>
+
+        <!-- Completed -->
+        <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+             onclick="window.location.href='?state=completed&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}'">
+            <div class="flex items-start justify-between mb-2">
+                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Completed</p>
+                <span class="iconify text-2xl text-green-600" data-icon="mdi:checkbox-marked-circle"></span>
+            </div>
+            <p class="text-2xl font-bold text-green-700">{{range $state, $count := .StateCounts}}{{if eq $state "completed"}}{{$count}}{{end}}{{end}}</p>
+        </div>
+
+        <!-- Failed -->
+        <div class="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+             onclick="window.location.href='?state=failed&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}'">
+            <div class="flex items-start justify-between mb-2">
+                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Failed</p>
+                <span class="iconify text-2xl text-red-600" data-icon="mdi:close-circle"></span>
+            </div>
+            <p class="text-2xl font-bold text-red-700">{{range $state, $count := .StateCounts}}{{if eq $state "failed"}}{{$count}}{{end}}{{end}}</p>
+        </div>
+
+        <!-- Retrying -->
+        <div class="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+             onclick="window.location.href='?state=retrying&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}'">
+            <div class="flex items-start justify-between mb-2">
+                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Retrying</p>
+                <span class="iconify text-2xl text-orange-600" data-icon="mdi:refresh-circle"></span>
+            </div>
+            <p class="text-2xl font-bold text-orange-700">{{range $state, $count := .StateCounts}}{{if eq $state "retrying"}}{{$count}}{{end}}{{end}}</p>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-6">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+                <span class="iconify text-xl text-gray-500" data-icon="mdi:filter-outline"></span>
+                <span class="text-sm font-semibold text-gray-700">Filters:</span>
+            </div>
+            <div class="flex gap-4 flex-1">
+                <div class="flex-1">
+                    <select onchange="window.location.href='?state={{.Filter.State}}&queue=' + this.value + '&kind={{.Filter.Kind}}'"
+                            class="w-full h-12 rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm px-4">
+                        <option value="">All Queues</option>
+                        {{range .Queues}}
+                        <option value="{{.Name}}" {{if eq $.Filter.Queue .Name}}selected{{end}}>{{.Name}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <select onchange="window.location.href='?state={{.Filter.State}}&queue={{.Filter.Queue}}&kind=' + this.value"
+                            class="w-full h-12 rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm px-4">
+                        <option value="">All Kinds</option>
+                        {{range .Kinds}}
+                        <option value="{{.}}" {{if eq $.Filter.Kind .}}selected{{end}}>{{.}}</option>
+                        {{end}}
+                    </select>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                <div class="flex items-center gap-2">
+                    <span class="iconify text-lg text-gray-600" data-icon="mdi:update"></span>
+                    <span class="text-sm font-medium text-gray-700">Auto-refresh</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="autoRefreshToggle" class="sr-only peer" checked onchange="toggleAutoRefresh(this.checked)">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs and Content -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200 bg-gray-50">
+            <nav class="flex space-x-1 p-2 overflow-x-auto" aria-label="State filters">
+                <a href="?queue={{.Filter.Queue}}&kind={{.Filter.Kind}}"
+                   class="{{if eq .Filter.State ""}}bg-white text-indigo-700 shadow-sm{{else}}text-gray-600 hover:text-gray-900 hover:bg-white/50{{end}} px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap">
+                    <span class="iconify" data-icon="mdi:view-dashboard"></span>
+                    <span>All States</span>
+                    <span class="{{if eq .Filter.State ""}}bg-indigo-100 text-indigo-700{{else}}bg-gray-200 text-gray-700{{end}} px-2 py-0.5 text-xs font-semibold rounded-full">{{.Count}}</span>
+                </a>
+                <a href="?state=pending&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}"
+                   class="{{if eq .Filter.State "pending"}}bg-white text-indigo-700 shadow-sm{{else}}text-gray-600 hover:text-gray-900 hover:bg-white/50{{end}} px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap">
+                    <span class="iconify" data-icon="mdi:clock-outline"></span>
+                    <span>Pending</span>
+                    <span class="{{if eq .Filter.State "pending"}}bg-indigo-100 text-indigo-700{{else}}bg-gray-200 text-gray-700{{end}} px-2 py-0.5 text-xs font-semibold rounded-full">{{range $state, $count := .StateCounts}}{{if eq $state "pending"}}{{$count}}{{end}}{{end}}</span>
+                </a>
+                <a href="?state=scheduled&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}"
+                   class="{{if eq .Filter.State "scheduled"}}bg-white text-indigo-700 shadow-sm{{else}}text-gray-600 hover:text-gray-900 hover:bg-white/50{{end}} px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap">
+                    <span class="iconify" data-icon="mdi:calendar-clock"></span>
+                    <span>Scheduled</span>
+                    <span class="{{if eq .Filter.State "scheduled"}}bg-indigo-100 text-indigo-700{{else}}bg-gray-200 text-gray-700{{end}} px-2 py-0.5 text-xs font-semibold rounded-full">{{range $state, $count := .StateCounts}}{{if eq $state "scheduled"}}{{$count}}{{end}}{{end}}</span>
+                </a>
+                <a href="?state=running&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}"
+                   class="{{if eq .Filter.State "running"}}bg-white text-indigo-700 shadow-sm{{else}}text-gray-600 hover:text-gray-900 hover:bg-white/50{{end}} px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap">
+                    <span class="iconify" data-icon="mdi:lightning-bolt"></span>
+                    <span>Running</span>
+                    <span class="{{if eq .Filter.State "running"}}bg-indigo-100 text-indigo-700{{else}}bg-gray-200 text-gray-700{{end}} px-2 py-0.5 text-xs font-semibold rounded-full">{{range $state, $count := .StateCounts}}{{if eq $state "running"}}{{$count}}{{end}}{{end}}</span>
+                </a>
+                <a href="?state=completed&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}"
+                   class="{{if eq .Filter.State "completed"}}bg-white text-indigo-700 shadow-sm{{else}}text-gray-600 hover:text-gray-900 hover:bg-white/50{{end}} px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap">
+                    <span class="iconify" data-icon="mdi:checkbox-marked-circle"></span>
+                    <span>Completed</span>
+                    <span class="{{if eq .Filter.State "completed"}}bg-indigo-100 text-indigo-700{{else}}bg-gray-200 text-gray-700{{end}} px-2 py-0.5 text-xs font-semibold rounded-full">{{range $state, $count := .StateCounts}}{{if eq $state "completed"}}{{$count}}{{end}}{{end}}</span>
+                </a>
+                <a href="?state=failed&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}"
+                   class="{{if eq .Filter.State "failed"}}bg-white text-indigo-700 shadow-sm{{else}}text-gray-600 hover:text-gray-900 hover:bg-white/50{{end}} px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap">
+                    <span class="iconify" data-icon="mdi:close-circle"></span>
+                    <span>Failed</span>
+                    <span class="{{if eq .Filter.State "failed"}}bg-indigo-100 text-indigo-700{{else}}bg-gray-200 text-gray-700{{end}} px-2 py-0.5 text-xs font-semibold rounded-full">{{range $state, $count := .StateCounts}}{{if eq $state "failed"}}{{$count}}{{end}}{{end}}</span>
+                </a>
+                <a href="?state=retrying&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}"
+                   class="{{if eq .Filter.State "retrying"}}bg-white text-indigo-700 shadow-sm{{else}}text-gray-600 hover:text-gray-900 hover:bg-white/50{{end}} px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap">
+                    <span class="iconify" data-icon="mdi:refresh-circle"></span>
+                    <span>Retrying</span>
+                    <span class="{{if eq .Filter.State "retrying"}}bg-indigo-100 text-indigo-700{{else}}bg-gray-200 text-gray-700{{end}} px-2 py-0.5 text-xs font-semibold rounded-full">{{range $state, $count := .StateCounts}}{{if eq $state "retrying"}}{{$count}}{{end}}{{end}}</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Task List -->
+        <div id="task-list"
+             hx-get="/monitor/tasks?state={{.Filter.State}}&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}"
+             hx-trigger="every 5s"
+             hx-swap="innerHTML">
+            <ul class="divide-y divide-gray-100">
+                {{template "task-rows" .}}
+            </ul>
+        </div>
+
+        <!-- Pagination -->
+        {{if or (gt .Offset 0) .HasMore}}
+        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
+            <div class="flex gap-2">
+                {{if gt .Offset 0}}
+                <a href="?offset={{add .Offset -50}}&state={{.Filter.State}}&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}"
+                   class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 shadow-sm transition-colors">
+                    <span class="iconify" data-icon="mdi:chevron-left"></span>
+                    Previous
+                </a>
+                {{end}}
+                {{if .HasMore}}
+                <a href="?offset={{add .Offset 50}}&state={{.Filter.State}}&queue={{.Filter.Queue}}&kind={{.Filter.Kind}}"
+                   class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 shadow-sm transition-colors">
+                    Next
+                    <span class="iconify" data-icon="mdi:chevron-right"></span>
+                </a>
+                {{end}}
+            </div>
+            <div class="text-sm text-gray-600 font-medium">
+                Showing {{add .Offset 1}} - {{add .Offset (len .Tasks)}} of {{.Count}} tasks
+            </div>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

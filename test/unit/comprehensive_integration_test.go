@@ -445,6 +445,14 @@ func TestComprehensiveIntegration(t *testing.T) {
 	})
 }
 
+// AssertNoError fails the test if err is not nil
+func AssertNoError(t *testing.T, err error, msg string) {
+	t.Helper()
+	if err != nil {
+		t.Fatalf("%s: %v", msg, err)
+	}
+}
+
 // WaitForTaskState waits for a task to reach a specific state
 func WaitForTaskState(t *testing.T, store ergon.Store, taskID string, expectedState ergon.TaskState, timeout time.Duration) *ergon.InternalTask {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

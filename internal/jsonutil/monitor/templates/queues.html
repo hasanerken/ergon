@@ -1,0 +1,67 @@
+{{template "layout" .}}
+
+{{define "title"}}Queues{{end}}
+
+{{define "content"}}
+<div>
+    <!-- Header -->
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+            Queues
+        </h2>
+    </div>
+
+    <!-- Queue List -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-md">
+        <ul role="list" class="divide-y divide-gray-200">
+            {{range .Queues}}
+            <li>
+                <div class="px-4 py-4 sm:px-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center min-w-0 flex-1">
+                            <p class="text-lg font-medium text-indigo-600 truncate">{{.Name}}</p>
+                            <span class="ml-3 inline-flex rounded-full px-2 text-xs font-semibold leading-5 {{if .Paused}}bg-red-100 text-red-800{{else}}bg-green-100 text-green-800{{end}}">
+                                {{if .Paused}}Paused{{else}}Active{{end}}
+                            </span>
+                        </div>
+                        <div class="ml-2 flex flex-shrink-0">
+                            <a href="/monitor/tasks?queue={{.Name}}"
+                               class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                View Tasks
+                            </a>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        <div class="bg-blue-50 rounded-lg p-3">
+                            <dt class="text-sm font-medium text-blue-500">Pending</dt>
+                            <dd class="mt-1 text-2xl font-semibold text-blue-900">{{.PendingCount}}</dd>
+                        </div>
+                        <div class="bg-yellow-50 rounded-lg p-3">
+                            <dt class="text-sm font-medium text-yellow-500">Running</dt>
+                            <dd class="mt-1 text-2xl font-semibold text-yellow-900">{{.RunningCount}}</dd>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-3">
+                            <dt class="text-sm font-medium text-green-500">Completed</dt>
+                            <dd class="mt-1 text-2xl font-semibold text-green-900">{{.CompletedCount}}</dd>
+                        </div>
+                        <div class="bg-red-50 rounded-lg p-3">
+                            <dt class="text-sm font-medium text-red-500">Failed</dt>
+                            <dd class="mt-1 text-2xl font-semibold text-red-900">{{.FailedCount}}</dd>
+                        </div>
+                    </div>
+                    {{if .Concurrency}}
+                    <div class="mt-3 text-sm text-gray-500">
+                        Concurrency: <span class="font-medium">{{.Concurrency}}</span> workers
+                    </div>
+                    {{end}}
+                </div>
+            </li>
+            {{else}}
+            <li class="px-4 py-8 text-center text-gray-500">
+                No queues found.
+            </li>
+            {{end}}
+        </ul>
+    </div>
+</div>
+{{end}}

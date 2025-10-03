@@ -1,0 +1,142 @@
+{{define "layout"}}
+<!doctype html>
+<html lang="en" class="h-full bg-gray-100">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Ergon Monitor - {{block "title" .}}Task Queue{{end}}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+        <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    </head>
+    <body class="h-full">
+        <div class="min-h-full">
+            <!-- Simple Header -->
+            <nav class="bg-indigo-600">
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div class="flex h-16 items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <h1 class="text-white text-2xl font-bold">
+                                    Task Monitor
+                                </h1>
+                            </div>
+                        </div>
+                        <div class="text-white text-sm">
+                            <span id="clock"></span>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main>
+                <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                    {{block "content" .}}{{end}}
+                </div>
+            </main>
+        </div>
+
+        <!-- Modal for task details -->
+        <div
+            id="task-modal"
+            style="display: none"
+            class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50"
+        >
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div
+                    class="bg-white rounded-lg shadow-xl max-w-4xl w-full overflow-y-auto"
+                    style="max-height: 90vh"
+                >
+                    <div
+                        class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between"
+                    >
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            Task Details
+                        </h3>
+                        <button
+                            onclick="document.getElementById('task-modal').style.display = 'none'"
+                            class="text-gray-400 hover:text-gray-600"
+                        >
+                            <svg
+                                class="h-6 w-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                ></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="modal-content" class="p-6">
+                        <!-- Content loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Clock
+            function updateClock() {
+                document.getElementById("clock").textContent =
+                    new Date().toLocaleTimeString();
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Auto-refresh control
+            let autoRefreshEnabled = true;
+            window.toggleAutoRefresh = function (enabled) {
+                autoRefreshEnabled = enabled;
+                const taskList = document.getElementById("task-list");
+                if (enabled) {
+                    taskList.setAttribute("hx-trigger", "every 5s");
+                    htmx.process(taskList);
+                } else {
+                    taskList.removeAttribute("hx-trigger");
+                    htmx.process(taskList);
+                }
+            };
+
+            // Modal functionality
+            window.showTaskModal = function (taskId) {
+                fetch(`/monitor/tasks/${taskId}`)
+                    .then((response) => response.text())
+                    .then((html) => {
+                        document.getElementById("modal-content").innerHTML =
+                            html;
+                        document.getElementById("task-modal").style.display =
+                            "block";
+                    });
+            };
+
+            // Close modal on escape key
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") {
+                    document.getElementById("task-modal").style.display =
+                        "none";
+                }
+            });
+
+            // Close modal on background click
+            document
+                .getElementById("task-modal")
+                .addEventListener("click", function (e) {
+                    if (e.target === this) {
+                        this.style.display = "none";
+                    }
+                });
+
+            // Listen for HTMX events
+            document.body.addEventListener("taskUpdated", function () {
+                htmx.trigger("#task-list", "refresh");
+            });
+        </script>
+    </body>
+</html>
+{{end}}

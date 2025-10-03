@@ -1,0 +1,319 @@
+{{template "layout" .}} {{define "title"}}Dashboard{{end}} {{define "content"}}
+<div>
+    <!-- Header -->
+    <div class="mb-6">
+        <h2
+            class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight"
+        >
+            Dashboard
+        </h2>
+    </div>
+
+    <!-- Stats Cards -->
+    <div
+        id="stats"
+        hx-get="/monitor/api/stats"
+        hx-trigger="refresh"
+        hx-swap="outerHTML"
+    >
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Total Tasks -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg
+                                class="h-6 w-6 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                ></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt
+                                    class="text-sm font-medium text-gray-500 truncate"
+                                >
+                                    Total Tasks
+                                </dt>
+                                <dd
+                                    class="text-3xl font-semibold text-gray-900"
+                                >
+                                    {{.Stats.TotalTasks}}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Tasks -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg
+                                class="h-6 w-6 text-blue-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                ></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt
+                                    class="text-sm font-medium text-gray-500 truncate"
+                                >
+                                    Pending
+                                </dt>
+                                <dd
+                                    class="text-3xl font-semibold text-blue-900"
+                                >
+                                    {{.Stats.PendingTasks}}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Running Tasks -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg
+                                class="h-6 w-6 text-yellow-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                                ></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt
+                                    class="text-sm font-medium text-gray-500 truncate"
+                                >
+                                    Running
+                                </dt>
+                                <dd
+                                    class="text-3xl font-semibold text-yellow-900"
+                                >
+                                    {{.Stats.RunningTasks}}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Tasks -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg
+                                class="h-6 w-6 text-green-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                ></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt
+                                    class="text-sm font-medium text-gray-500 truncate"
+                                >
+                                    Completed
+                                </dt>
+                                <dd
+                                    class="text-3xl font-semibold text-green-900"
+                                >
+                                    {{.Stats.CompletedTasks}}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Failed Tasks -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg
+                                class="h-6 w-6 text-red-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                ></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt
+                                    class="text-sm font-medium text-gray-500 truncate"
+                                >
+                                    Failed
+                                </dt>
+                                <dd class="text-3xl font-semibold text-red-900">
+                                    {{.Stats.FailedTasks}}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success Rate -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg
+                                class="h-6 w-6 text-indigo-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                ></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt
+                                    class="text-sm font-medium text-gray-500 truncate"
+                                >
+                                    Success Rate
+                                </dt>
+                                <dd
+                                    class="text-3xl font-semibold text-indigo-900"
+                                >
+                                    {{printf "%.1f" .Stats.SuccessRate}}%
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Queues Overview -->
+    <div class="mt-8">
+        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">
+            Queues Overview
+        </h3>
+        <div class="bg-white shadow overflow-hidden sm:rounded-md">
+            <ul role="list" class="divide-y divide-gray-200">
+                {{range .Queues}}
+                <li>
+                    <a
+                        href="/monitor/tasks?queue={{.Name}}"
+                        class="block hover:bg-gray-50"
+                    >
+                        <div class="px-4 py-4 sm:px-6">
+                            <div class="flex items-center justify-between">
+                                <p
+                                    class="text-sm font-medium text-indigo-600 truncate"
+                                >
+                                    {{.Name}}
+                                </p>
+                                <div class="ml-2 flex flex-shrink-0">
+                                    <p
+                                        class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 {{if .Paused}}bg-red-100 text-red-800{{else}}bg-green-100 text-green-800{{end}}"
+                                    >
+                                        {{if
+                                        .Paused}}Paused{{else}}Active{{end}}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="mt-2 sm:flex sm:justify-between">
+                                <div class="sm:flex space-x-4">
+                                    <p
+                                        class="flex items-center text-sm text-gray-500"
+                                    >
+                                        Pending:
+                                        <span
+                                            class="ml-1 font-medium text-blue-600"
+                                            >{{.PendingCount}}</span
+                                        >
+                                    </p>
+                                    <p
+                                        class="flex items-center text-sm text-gray-500"
+                                    >
+                                        Running:
+                                        <span
+                                            class="ml-1 font-medium text-yellow-600"
+                                            >{{.RunningCount}}</span
+                                        >
+                                    </p>
+                                    <p
+                                        class="flex items-center text-sm text-gray-500"
+                                    >
+                                        Completed:
+                                        <span
+                                            class="ml-1 font-medium text-green-600"
+                                            >{{.CompletedCount}}</span
+                                        >
+                                    </p>
+                                    <p
+                                        class="flex items-center text-sm text-gray-500"
+                                    >
+                                        Failed:
+                                        <span
+                                            class="ml-1 font-medium text-red-600"
+                                            >{{.FailedCount}}</span
+                                        >
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </li>
+                {{end}}
+            </ul>
+        </div>
+    </div>
+</div>
+{{end}}

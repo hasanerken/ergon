@@ -1,0 +1,50 @@
+{{define "task-rows"}}
+{{range .Tasks}}
+<li class="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-transparent transition-all duration-200 border-b border-gray-100">
+    <div class="px-4 py-3">
+        <div class="flex items-center gap-3">
+            <!-- Task Icon -->
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br {{if eq .State "completed"}}from-green-400 to-green-600{{else if eq .State "failed"}}from-red-400 to-red-600{{else if eq .State "running"}}from-yellow-400 to-yellow-600{{else if eq .State "pending"}}from-blue-400 to-blue-600{{else if eq .State "scheduled"}}from-purple-400 to-purple-600{{else}}from-gray-400 to-gray-600{{end}} flex items-center justify-center shadow">
+                <span class="iconify text-white text-xl" data-icon="{{if eq .State "pending"}}mdi:clock-outline{{else if eq .State "scheduled"}}mdi:calendar-clock{{else if eq .State "available"}}mdi:checkbox-marked-circle-outline{{else if eq .State "running"}}mdi:lightning-bolt{{else if eq .State "completed"}}mdi:checkbox-marked-circle{{else if eq .State "failed"}}mdi:close-circle{{else if eq .State "cancelled"}}mdi:cancel{{else if eq .State "retrying"}}mdi:refresh-circle{{end}}"></span>
+            </div>
+
+            <!-- Task Info - Compact Single Row -->
+            <div class="flex-1 min-w-0 flex items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-bold text-gray-900">{{.Kind}}</h3>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold {{stateClass .State}}">{{.State}}</span>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600">{{.Queue}}</span>
+                </div>
+                <span class="text-xs text-gray-400 font-mono truncate">{{.ID}}</span>
+                <div class="flex items-center gap-3 text-xs text-gray-600">
+                    <span class="flex items-center gap-1"><span class="iconify" data-icon="mdi:clock-outline"></span>{{formatTime .EnqueuedAt}}</span>
+                    {{if .StartedAt}}<span class="flex items-center gap-1"><span class="iconify text-green-600" data-icon="mdi:play-circle"></span>{{formatTime .StartedAt}}</span>{{end}}
+                    {{if gt .Retried 0}}<span class="flex items-center gap-1 text-orange-600 font-semibold"><span class="iconify" data-icon="mdi:refresh-circle"></span>{{.Retried}}/{{.MaxRetries}}</span>{{end}}
+                    <span class="flex items-center gap-1"><span class="iconify text-purple-500" data-icon="mdi:priority-high"></span>{{.Priority}}</span>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <button onclick="showTaskModal('{{.ID}}')" class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-xs font-semibold shadow hover:shadow-md transition-all">
+                <span class="iconify" data-icon="mdi:code-json"></span>
+                Payload
+            </button>
+        </div>
+        {{if .Error}}
+        <div class="mt-2 ml-13 flex items-start gap-2 p-2 bg-red-50 border-l-2 border-red-400 rounded-r">
+            <span class="iconify text-red-500 flex-shrink-0" data-icon="mdi:alert-circle"></span>
+            <p class="text-xs text-red-700 font-mono">{{.Error}}</p>
+        </div>
+        {{end}}
+    </div>
+</li>
+{{else}}
+<li class="px-6 py-16 text-center">
+    <div class="flex flex-col items-center gap-3">
+        <span class="iconify text-gray-300 text-6xl" data-icon="mdi:inbox"></span>
+        <p class="text-gray-500 font-medium">No tasks found</p>
+        <p class="text-sm text-gray-400">Try adjusting your filters</p>
+    </div>
+</li>
+{{end}}
+{{end}}
