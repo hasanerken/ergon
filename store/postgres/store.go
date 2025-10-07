@@ -9,7 +9,7 @@ import (
 
 	"github.com/hasanerken/ergon"
 	"github.com/hasanerken/ergon/internal/jsonutil"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // Store implements ergon.Store interface using PostgreSQL
@@ -60,7 +60,7 @@ func (s *Store) Enqueue(ctx context.Context, task *ergon.InternalTask) error {
 	`
 
 	// Payload is already JSON bytes - no need to marshal again
-	var metadataJSON []byte
+	var metadataJSON []byte = nil // Explicitly nil, not empty slice
 	var err error
 	if task.Metadata != nil {
 		metadataJSON, err = jsonutil.Marshal(task.Metadata)
@@ -86,8 +86,8 @@ func (s *Store) Enqueue(ctx context.Context, task *ergon.InternalTask) error {
 		int(task.Timeout.Seconds()),
 		task.ScheduledAt,
 		task.EnqueuedAt,
-		task.Payload, // Already JSON bytes
-		metadataJSON,
+		task.Payload,          // Already JSON bytes
+		nullJSON(metadataJSON), // Handle empty metadata properly
 		nullString(task.UniqueKey),
 		nullString(task.GroupKey),
 		nullString(task.RateLimitScope),
@@ -98,10 +98,9 @@ func (s *Store) Enqueue(ctx context.Context, task *ergon.InternalTask) error {
 
 	if err != nil {
 		// Check for unique constraint violation
-		if pqErr, ok := err.(*pq.Error); ok {
-			if pqErr.Code == "23505" { // unique_violation
-				return ergon.ErrDuplicateTask
-			}
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" { // unique_violation
+			return ergon.ErrDuplicateTask
 		}
 		return fmt.Errorf("failed to insert task: %w", err)
 	}
@@ -135,7 +134,7 @@ func (s *Store) EnqueueMany(ctx context.Context, tasks []*ergon.InternalTask) er
 	defer stmt.Close()
 
 	for _, task := range tasks {
-		var metadataJSON []byte
+		var metadataJSON []byte = nil // Explicitly nil, not empty slice
 		var err error
 		if task.Metadata != nil {
 			metadataJSON, err = jsonutil.Marshal(task.Metadata)
@@ -153,16 +152,15 @@ func (s *Store) EnqueueMany(ctx context.Context, tasks []*ergon.InternalTask) er
 		_, err = stmt.ExecContext(ctx,
 			task.ID, task.Kind, task.Queue, task.State, task.Priority,
 			task.MaxRetries, task.Retried, int(task.Timeout.Seconds()),
-			task.ScheduledAt, task.EnqueuedAt, task.Payload, metadataJSON, // Payload already JSON
+			task.ScheduledAt, task.EnqueuedAt, task.Payload, nullJSON(metadataJSON), // Handle empty metadata
 			nullString(task.UniqueKey), nullString(task.GroupKey),
 			nullString(task.RateLimitScope), task.Recurring,
 			nullString(task.CronSchedule), intervalSeconds,
 		)
 		if err != nil {
-			if pqErr, ok := err.(*pq.Error); ok {
-				if pqErr.Code == "23505" {
-					return ergon.ErrDuplicateTask
-				}
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				return ergon.ErrDuplicateTask
 			}
 			return fmt.Errorf("failed to insert task %s: %w", task.ID, err)
 		}
@@ -190,7 +188,7 @@ func (s *Store) EnqueueTx(ctx context.Context, tx ergon.Tx, task *ergon.Internal
 	// Payload is already JSON - no double marshaling needed
 	payloadJSON := task.Payload
 
-	var metadataJSON []byte
+	var metadataJSON []byte = nil // Explicitly nil, not empty slice
 	var err error
 	if task.Metadata != nil {
 		metadataJSON, err = jsonutil.Marshal(task.Metadata)
@@ -208,17 +206,16 @@ func (s *Store) EnqueueTx(ctx context.Context, tx ergon.Tx, task *ergon.Internal
 	_, err = pgTx.tx.ExecContext(ctx, query,
 		task.ID, task.Kind, task.Queue, task.State, task.Priority,
 		task.MaxRetries, task.Retried, int(task.Timeout.Seconds()),
-		task.ScheduledAt, task.EnqueuedAt, payloadJSON, metadataJSON,
+		task.ScheduledAt, task.EnqueuedAt, payloadJSON, nullJSON(metadataJSON),
 		nullString(task.UniqueKey), nullString(task.GroupKey),
 		nullString(task.RateLimitScope), task.Recurring,
 		nullString(task.CronSchedule), intervalSeconds,
 	)
 
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			if pqErr.Code == "23505" {
-				return ergon.ErrDuplicateTask
-			}
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return ergon.ErrDuplicateTask
 		}
 		return fmt.Errorf("failed to insert task: %w", err)
 	}
@@ -254,7 +251,7 @@ func (s *Store) Dequeue(ctx context.Context, queues []string, workerID string) (
 	var uniqueKey, groupKey, rateLimitScope, cronSchedule sql.NullString
 	var intervalSeconds sql.NullInt64
 
-	err := s.db.QueryRowContext(ctx, query, pq.Array(queues)).Scan(
+	err := s.db.QueryRowContext(ctx, query, queues).Scan(
 		&task.ID, &task.Kind, &task.Queue, &task.State, &task.Priority,
 		&task.MaxRetries, &task.Retried, &timeoutSeconds,
 		&task.ScheduledAt, &task.EnqueuedAt, &task.StartedAt, &task.CompletedAt,
@@ -405,4 +402,13 @@ func nullStringValue(ns sql.NullString) string {
 		return ns.String
 	}
 	return ""
+}
+
+// nullJSON returns nil for empty/nil byte slices, otherwise returns the bytes
+// This prevents PostgreSQL from receiving empty byte slices which it can't parse as JSON
+func nullJSON(data []byte) interface{} {
+	if len(data) == 0 {
+		return nil
+	}
+	return data
 }

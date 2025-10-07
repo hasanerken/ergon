@@ -112,6 +112,7 @@ func Enqueue[T TaskArgs](c *Client, ctx context.Context, args T, opts ...Option)
 		UniqueKey:      uniqueKey,
 		GroupKey:       cfg.groupKey,
 		RateLimitScope: rateLimitScope,
+		MaxConcurrent:  cfg.maxConcurrent,
 		Recurring:      cfg.recurring,
 		CronSchedule:   cfg.cronSchedule,
 		Interval:       cfg.interval,
@@ -191,13 +192,14 @@ func EnqueueTx[T TaskArgs](c *Client, ctx context.Context, tx Tx, args T, opts .
 	// Create internal task
 	now := time.Now()
 	internalTask := &InternalTask{
-		ID:          generateID(),
-		Kind:        kind,
-		Queue:       cfg.queue,
-		State:       state,
-		Priority:    cfg.priority,
-		MaxRetries:  cfg.maxRetries,
-		Timeout:     cfg.timeout,
+		ID:            generateID(),
+		Kind:          kind,
+		Queue:         cfg.queue,
+		State:         state,
+		Priority:      cfg.priority,
+		MaxRetries:    cfg.maxRetries,
+		Timeout:       cfg.timeout,
+		MaxConcurrent: cfg.maxConcurrent,
 		ScheduledAt: cfg.scheduledAt,
 		EnqueuedAt:  now,
 		Payload:     payload,
@@ -271,6 +273,15 @@ func EnqueueMany[T TaskArgs](c *Client, ctx context.Context, argsList []T, opts 
 			uniqueKey = computeUniqueKey(kind, payload, cfg.queue, cfg)
 		}
 
+		// Generate partition key if needed
+		var rateLimitScope string
+		if cfg.rateLimitScope != "" {
+			rateLimitScope = cfg.rateLimitScope
+			if cfg.partitionKeyFunc != nil || len(cfg.partitionByArgs) > 0 {
+				rateLimitScope += ":" + computePartitionKey(payload, cfg)
+			}
+		}
+
 		// Determine state
 		state := StatePending
 		if cfg.scheduledAt != nil && cfg.scheduledAt.After(time.Now()) {
@@ -278,36 +289,39 @@ func EnqueueMany[T TaskArgs](c *Client, ctx context.Context, argsList []T, opts 
 		}
 
 		internalTask := &InternalTask{
-			ID:          generateID(),
-			Kind:        kind,
-			Queue:       cfg.queue,
-			State:       state,
-			Priority:    cfg.priority,
-			MaxRetries:  cfg.maxRetries,
-			Timeout:     cfg.timeout,
-			ScheduledAt: cfg.scheduledAt,
-			EnqueuedAt:  now,
-			Payload:     payload,
-			Metadata:    cfg.metadata,
-			UniqueKey:   uniqueKey,
-			GroupKey:    cfg.groupKey,
+			ID:             generateID(),
+			Kind:           kind,
+			Queue:          cfg.queue,
+			State:          state,
+			Priority:       cfg.priority,
+			MaxRetries:     cfg.maxRetries,
+			Timeout:        cfg.timeout,
+			ScheduledAt:    cfg.scheduledAt,
+			EnqueuedAt:     now,
+			Payload:        payload,
+			Metadata:       cfg.metadata,
+			UniqueKey:      uniqueKey,
+			GroupKey:       cfg.groupKey,
+			RateLimitScope: rateLimitScope,
+			MaxConcurrent:  cfg.maxConcurrent,
 		}
 
 		internalTasks = append(internalTasks, internalTask)
 		tasks = append(tasks, &Task[T]{
-			ID:          internalTask.ID,
-			Kind:        kind,
-			Queue:       cfg.queue,
-			State:       state,
-			Priority:    cfg.priority,
-			MaxRetries:  cfg.maxRetries,
-			Timeout:     cfg.timeout,
-			ScheduledAt: cfg.scheduledAt,
-			EnqueuedAt:  now,
-			Args:        args,
-			Metadata:    cfg.metadata,
-			uniqueKey:   uniqueKey,
-			groupKey:    cfg.groupKey,
+			ID:             internalTask.ID,
+			Kind:           kind,
+			Queue:          cfg.queue,
+			State:          state,
+			Priority:       cfg.priority,
+			MaxRetries:     cfg.maxRetries,
+			Timeout:        cfg.timeout,
+			ScheduledAt:    cfg.scheduledAt,
+			EnqueuedAt:     now,
+			Args:           args,
+			Metadata:       cfg.metadata,
+			uniqueKey:      uniqueKey,
+			groupKey:       cfg.groupKey,
+			rateLimitScope: rateLimitScope,
 		})
 	}
 

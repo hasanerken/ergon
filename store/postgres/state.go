@@ -41,7 +41,7 @@ func (s *Store) MarkCompleted(ctx context.Context, taskID string, result []byte)
 		WHERE id = $1
 	`
 
-	res, err := s.db.ExecContext(ctx, query, taskID, result)
+	res, err := s.db.ExecContext(ctx, query, taskID, nullJSON(result))
 	if err != nil {
 		return fmt.Errorf("failed to mark task as completed: %w", err)
 	}

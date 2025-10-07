@@ -74,6 +74,7 @@ type InternalTask struct {
 	UniqueKey      string
 	GroupKey       string
 	RateLimitScope string
+	MaxConcurrent  int // Maximum concurrent executions for rate limiting
 
 	// Recurring task fields
 	Recurring    bool

@@ -6,7 +6,6 @@ require (
 	github.com/dgraph-io/badger/v4 v4.8.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.6
-	github.com/lib/pq v1.10.9
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 )
 

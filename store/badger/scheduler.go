@@ -15,7 +15,13 @@ func (s *Store) MoveScheduledToAvailable(ctx context.Context, before time.Time) 
 	count := 0
 
 	err := s.db.Update(func(txn *badger.Txn) error {
-		// Scan scheduled tasks before the given time
+		// PHASE 1: Collect all scheduled task keys to process
+		// (We must NOT delete from index while iterating over it)
+		var keysToProcess []struct {
+			taskID       string
+			scheduledKey []byte
+		}
+
 		prefix := s.keys.ScheduledPrefix()
 		endKey := s.keys.ScheduledBefore(before)
 
@@ -35,8 +41,19 @@ func (s *Store) MoveScheduledToAvailable(ctx context.Context, before time.Time) 
 				break
 			}
 
-			// Extract task ID
+			// Extract task ID and save key for later processing
 			taskID := s.keys.ParseTaskID(key)
+			keyCopy := append([]byte(nil), key...)
+			keysToProcess = append(keysToProcess, struct {
+				taskID       string
+				scheduledKey []byte
+			}{taskID, keyCopy})
+		}
+
+		// PHASE 2: Process collected tasks (iterator is now closed)
+		for _, item := range keysToProcess {
+			taskID := item.taskID
+			scheduledKey := item.scheduledKey
 
 			// Load task
 			taskKey := s.keys.Task(taskID)
@@ -50,6 +67,14 @@ func (s *Store) MoveScheduledToAvailable(ctx context.Context, before time.Time) 
 				return msgpack.Unmarshal(val, &task)
 			})
 			if err != nil {
+				continue
+			}
+
+			// Skip if task is no longer in scheduled state
+			// (it may have been cancelled or completed by another process)
+			if task.State != ergon.StateScheduled {
+				// Remove stale scheduled index entry
+				_ = txn.Delete(scheduledKey)
 				continue
 			}
 
@@ -67,7 +92,7 @@ func (s *Store) MoveScheduledToAvailable(ctx context.Context, before time.Time) 
 			}
 
 			// Remove from scheduled index
-			if err := txn.Delete(key); err != nil {
+			if err := txn.Delete(scheduledKey); err != nil {
 				continue
 			}
 
@@ -80,7 +105,12 @@ func (s *Store) MoveScheduledToAvailable(ctx context.Context, before time.Time) 
 			count++
 		}
 
-		// Also process retry queue
+		// PHASE 3: Process retry queue (same two-phase approach)
+		var retryKeysToProcess []struct {
+			taskID   string
+			retryKey []byte
+		}
+
 		retryPrefix := s.keys.RetryPrefix()
 		retryEndKey := s.keys.RetryBefore(before)
 
@@ -100,8 +130,19 @@ func (s *Store) MoveScheduledToAvailable(ctx context.Context, before time.Time) 
 				break
 			}
 
-			// Extract task ID
+			// Extract task ID and save key for later processing
 			taskID := s.keys.ParseTaskID(key)
+			keyCopy := append([]byte(nil), key...)
+			retryKeysToProcess = append(retryKeysToProcess, struct {
+				taskID   string
+				retryKey []byte
+			}{taskID, keyCopy})
+		}
+
+		// PHASE 4: Process collected retry tasks (iterator is now closed)
+		for _, item := range retryKeysToProcess {
+			taskID := item.taskID
+			retryKey := item.retryKey
 
 			// Load task
 			taskKey := s.keys.Task(taskID)
@@ -115,6 +156,13 @@ func (s *Store) MoveScheduledToAvailable(ctx context.Context, before time.Time) 
 				return msgpack.Unmarshal(val, &task)
 			})
 			if err != nil {
+				continue
+			}
+
+			// Skip if task is no longer in retrying state
+			if task.State != ergon.StateRetrying {
+				// Remove stale retry index entry
+				_ = txn.Delete(retryKey)
 				continue
 			}
 
@@ -132,7 +180,7 @@ func (s *Store) MoveScheduledToAvailable(ctx context.Context, before time.Time) 
 			}
 
 			// Remove from retry index
-			if err := txn.Delete(key); err != nil {
+			if err := txn.Delete(retryKey); err != nil {
 				continue
 			}
 

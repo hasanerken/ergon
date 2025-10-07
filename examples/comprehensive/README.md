@@ -2,6 +2,10 @@
 
 This example demonstrates **ALL** major features of the Ergon task queue library in a single application.
 
+**Two versions available:**
+- `main.go` - **BadgerDB** backend (embedded, no dependencies)
+- `main_postgres.go` - **PostgreSQL** backend (same features, different store)
+
 ## Features Demonstrated
 
 ### 1. **Standard Tasks** ✅
@@ -82,9 +86,31 @@ This example demonstrates **ALL** major features of the Ergon task queue library
 
 ## Running the Example
 
+### BadgerDB Version (No Setup Required)
+
 ```bash
 cd examples/comprehensive
 go run main.go
+```
+
+### PostgreSQL Version
+
+**Prerequisites:**
+- PostgreSQL server running
+- Database created: `createdb ergon`
+
+**Run with default connection:**
+```bash
+cd examples/comprehensive
+go run main_postgres.go
+```
+
+Default connection string: `postgres://postgres:ergon123@localhost:5432/ergon?sslmode=disable`
+
+**Run with custom connection:**
+```bash
+export DATABASE_URL="postgres://user:pass@host:5432/dbname?sslmode=disable"
+go run main_postgres.go
 ```
 
 ## Expected Output
@@ -209,15 +235,19 @@ Each task type has a corresponding worker:
 
 ## Storage
 
-The example uses **Badger** (embedded key-value store):
+Both examples demonstrate identical features with different storage backends:
 
+### BadgerDB (`main.go`)
+
+**Embedded key-value store:**
 - **Location**: `./ergon-tasks-db/`
 - **Type**: Persistent (survives restarts)
 - **Cleanup**: Automatically deleted after demo
 - **Isolation**: Completely separate from your app's database
+- **Pros**: Zero infrastructure, single binary, perfect for development
+- **Cons**: Single-node only, limited to one process
 
-### Using Badger in Production
-
+**Production usage:**
 ```go
 // Your app's cache
 cacheDB, _ := badger.Open(badger.DefaultOptions("./cache"))
@@ -227,6 +257,45 @@ taskStore, _ := ergonbadger.NewStore("./ergon-tasks")
 
 // No interference between the two!
 ```
+
+### PostgreSQL (`main_postgres.go`)
+
+**Relational database store:**
+- **Type**: Persistent in PostgreSQL database
+- **Tables**: `queue_tasks`, `queue_groups`, `queue_aggregations`
+- **Isolation**: Uses separate schema/tables from your app
+- **Pros**: Multi-server, high availability, familiar SQL tools
+- **Cons**: Requires PostgreSQL server
+
+**Production usage:**
+```go
+import (
+    "database/sql"
+    _ "github.com/lib/pq"
+    "github.com/hasanerken/ergon/store/postgres"
+)
+
+// Your app's database
+appDB, _ := sql.Open("postgres", "postgres://localhost/myapp")
+
+// Ergon's task queue - SAME SERVER, SEPARATE TABLES
+taskStore, _ := postgres.NewStore(appDB)
+
+// Both use same PostgreSQL instance, different tables!
+```
+
+### Which Backend to Use?
+
+| Scenario | Recommended Backend |
+|----------|-------------------|
+| Development & Testing | **BadgerDB** (zero setup) |
+| Single-server production | **BadgerDB** or **PostgreSQL** |
+| Multi-server production | **PostgreSQL** (distributed) |
+| High availability required | **PostgreSQL** (replication) |
+| Simple deployment | **BadgerDB** (single binary) |
+| Existing PostgreSQL infra | **PostgreSQL** (reuse) |
+
+**Both are production-ready and fully consistent!** See `BADGER_POSTGRES_CONSISTENCY.md` for detailed comparison.
 
 ## Queue Configuration
 
@@ -256,6 +325,25 @@ The example uses:
 ✅ **Observable** - Rich statistics and inspection APIs
 ✅ **Controllable** - Cancel, delete, and manage tasks
 ✅ **Production-Ready** - Graceful shutdown, middleware, error handling
+✅ **Backend Choice** - Drop-in replacement between BadgerDB and PostgreSQL
+
+## BadgerDB vs PostgreSQL
+
+Both versions demonstrate **identical functionality**:
+
+| Feature | BadgerDB | PostgreSQL | Notes |
+|---------|----------|------------|-------|
+| All 15 features | ✅ | ✅ | Complete parity |
+| Scheduling precision | ±5 seconds | ±5 seconds | Same scheduler |
+| Retry logic | ✅ | ✅ | Identical behavior |
+| State transitions | ✅ | ✅ | Same state machine |
+| API compatibility | ✅ | ✅ | Drop-in replacement |
+| Performance | Fast (in-memory) | Fast (network) | Both production-ready |
+
+**See also:**
+- `BADGER_POSTGRES_CONSISTENCY.md` - Full consistency verification
+- `SCHEDULER_COMPARISON.md` - Technical scheduler comparison
+- `STORE_CONSISTENCY_TEST.md` - Test methodology
 
 ## Next Steps
 

@@ -7,13 +7,16 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/hasanerken/ergon/internal/ratelimit"
 )
 
 // Server processes tasks from the queue
 type Server struct {
-	store   Store
-	config  ServerConfig
-	workers *Workers
+	store       Store
+	config      ServerConfig
+	workers     *Workers
+	rateLimiter *ratelimit.RateLimiter
 
 	mu      sync.Mutex
 	running bool
@@ -50,6 +53,16 @@ type ServerConfig struct {
 	AggregationInterval time.Duration // How often to check groups
 	AggregationMaxSize  int           // Default max group size
 	AggregationMaxDelay time.Duration // Default max group delay
+
+	// Rate limiting
+	EnableRateLimiting bool                    // Enable rate limiting enforcement
+	RateLimiter        *ratelimit.RateLimiter  // Optional custom rate limiter (auto-created if nil)
+
+	// Event callbacks for monitoring and observability
+	OnTaskStarted   func(ctx context.Context, task *InternalTask)
+	OnTaskCompleted func(ctx context.Context, task *InternalTask, duration time.Duration)
+	OnTaskFailed    func(ctx context.Context, task *InternalTask, err error)
+	OnTaskRetried   func(ctx context.Context, task *InternalTask, attempt int, nextRetry time.Time)
 }
 
 // QueueConfig configures a queue
@@ -123,10 +136,21 @@ func NewServer(store Store, cfg ServerConfig) (*Server, error) {
 			"   BadgerDB is recommended for development or low-to-medium concurrency scenarios (<12 workers).", totalWorkers)
 	}
 
+	// Initialize rate limiter if rate limiting is enabled
+	var rateLimiter *ratelimit.RateLimiter
+	if cfg.EnableRateLimiting {
+		if cfg.RateLimiter != nil {
+			rateLimiter = cfg.RateLimiter
+		} else {
+			rateLimiter = ratelimit.NewRateLimiter()
+		}
+	}
+
 	return &Server{
-		store:   store,
-		config:  cfg,
-		workers: cfg.Workers,
+		store:       store,
+		config:      cfg,
+		workers:     cfg.Workers,
+		rateLimiter: rateLimiter,
 	}, nil
 }
 
@@ -385,10 +409,30 @@ func (s *Server) processTask(ctx context.Context, task *InternalTask) {
 		return
 	}
 
+	// Rate limiting check (before marking as running)
+	if s.rateLimiter != nil && task.RateLimitScope != "" && task.MaxConcurrent > 0 {
+		allowed, retryAfter := s.rateLimiter.Allow(task.RateLimitScope, task.MaxConcurrent)
+		if !allowed {
+			// Rate limited - requeue task with delay
+			nextRetry := time.Now().Add(retryAfter)
+			log.Printf("[Queue] Task %s rate limited (scope=%s, limit=%d), retrying in %v",
+				task.ID, task.RateLimitScope, task.MaxConcurrent, retryAfter)
+			_ = s.store.MarkRetrying(ctx, task.ID, nextRetry)
+			return
+		}
+		// Release the rate limit slot when task completes
+		defer s.rateLimiter.Release(task.RateLimitScope)
+	}
+
 	// Mark task as running
 	if err := s.store.MarkRunning(ctx, task.ID, generateWorkerID()); err != nil {
 		log.Printf("[Queue] Failed to mark task as running: %v", err)
 		return
+	}
+
+	// Callback: Task started
+	if s.config.OnTaskStarted != nil {
+		s.config.OnTaskStarted(ctx, task)
 	}
 
 	// Build execution chain
@@ -437,6 +481,17 @@ func (s *Server) processTask(ctx context.Context, task *InternalTask) {
 
 // handleTaskSuccess handles successful task completion
 func (s *Server) handleTaskSuccess(ctx context.Context, task *InternalTask) {
+	// Calculate duration
+	var duration time.Duration
+	if task.StartedAt != nil {
+		duration = time.Since(*task.StartedAt)
+	}
+
+	// Callback: Task completed
+	if s.config.OnTaskCompleted != nil {
+		s.config.OnTaskCompleted(ctx, task, duration)
+	}
+
 	// Check if this is a recurring task
 	if task.Recurring {
 		s.rescheduleRecurringTask(ctx, task)
@@ -545,10 +600,20 @@ func (s *Server) handleTaskError(ctx context.Context, task *InternalTask, err er
 			task.ID, retryDelay, task.Retried+1, task.MaxRetries, err)
 
 		_ = s.store.MarkRetrying(ctx, task.ID, nextRetry)
+
+		// Callback: Task retried
+		if s.config.OnTaskRetried != nil {
+			s.config.OnTaskRetried(ctx, task, task.Retried+1, nextRetry)
+		}
 	} else {
 		// Exhausted retries or non-retryable error
 		log.Printf("[Queue] Task %s failed permanently: %v", task.ID, err)
 		_ = s.store.MarkFailed(ctx, task.ID, err)
+
+		// Callback: Task failed permanently
+		if s.config.OnTaskFailed != nil {
+			s.config.OnTaskFailed(ctx, task, err)
+		}
 	}
 
 	// Call error handler if configured

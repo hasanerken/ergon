@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/hasanerken/ergon"
-	"github.com/lib/pq"
 )
 
 // ListTasks lists tasks matching the filter
@@ -39,7 +38,7 @@ func (s *Store) ListTasks(ctx context.Context, filter *ergon.TaskFilter) ([]*erg
 
 		if len(filter.States) > 0 {
 			query += fmt.Sprintf(" AND state = ANY($%d)", argNum)
-			args = append(args, pq.Array(filter.States))
+			args = append(args, filter.States)
 			argNum++
 		}
 
@@ -51,7 +50,7 @@ func (s *Store) ListTasks(ctx context.Context, filter *ergon.TaskFilter) ([]*erg
 
 		if len(filter.Kinds) > 0 {
 			query += fmt.Sprintf(" AND kind = ANY($%d)", argNum)
-			args = append(args, pq.Array(filter.Kinds))
+			args = append(args, filter.Kinds)
 			argNum++
 		}
 
@@ -125,7 +124,7 @@ func (s *Store) CountTasks(ctx context.Context, filter *ergon.TaskFilter) (int, 
 
 		if len(filter.States) > 0 {
 			query += fmt.Sprintf(" AND state = ANY($%d)", argNum)
-			args = append(args, pq.Array(filter.States))
+			args = append(args, filter.States)
 			argNum++
 		}
 
@@ -137,7 +136,7 @@ func (s *Store) CountTasks(ctx context.Context, filter *ergon.TaskFilter) (int, 
 
 		if len(filter.Kinds) > 0 {
 			query += fmt.Sprintf(" AND kind = ANY($%d)", argNum)
-			args = append(args, pq.Array(filter.Kinds))
+			args = append(args, filter.Kinds)
 			argNum++
 		}
 
