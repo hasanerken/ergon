@@ -26,6 +26,16 @@ go get github.com/hasanerken/ergon
 
 See `examples/` directory for complete examples.
 
+## 📚 Documentation
+
+Detailed documentation is available in the `docs/` directory:
+
+- **[Design Patterns](docs/DESIGN_PATTERNS.md)** - Architecture and patterns used in Ergon
+- **[Monitoring Guide](docs/MONITORING_GUIDE.md)** - How to monitor and observe task queues
+- **[Monitoring Architecture](docs/MONITORING_ARCHITECTURE.md)** - Monitoring system design
+- **[Scheduling Guide](docs/SCHEDULING_GUIDE.md)** - Task scheduling and recurring tasks
+- **[Test Suite](TEST_README.md)** - Comprehensive testing documentation
+
 ## 📄 License
 
 MIT License
