@@ -76,6 +76,22 @@ go run examples/statistics/main.go  # Statistics and monitoring example
 - Two implementations in `store/` directory:
   - `store/badger/`: Embedded key-value store (BadgerDB) - no infrastructure needed
   - `store/postgres/`: PostgreSQL-based storage with transactions and pub/sub
+    - `Store`: Uses database/sql (PgBouncer compatible by default)
+    - `StorePgx`: High-performance pgx driver with optional PgBouncer mode
+
+**PostgreSQL Store Options**:
+```go
+// Direct PostgreSQL (default - uses prepared statements)
+store, _ := postgres.NewStorePgx(ctx, dsn)
+
+// PgBouncer mode (disables prepared statements)
+store, _ := postgres.NewStorePgxWithConfig(ctx, postgres.PgxConfig{
+    DSN:          "postgres://user:pass@localhost:6432/db",
+    UsePgBouncer: true, // Required for PgBouncer transaction/statement mode
+    MaxConns:     50,
+    MinConns:     5,
+})
+```
 
 **Key Operations**:
 - Task CRUD: `Enqueue`, `Dequeue`, `GetTask`, `ListTasks`, `UpdateTask`

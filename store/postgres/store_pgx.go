@@ -18,22 +18,76 @@ type StorePgx struct {
 	pool *pgxpool.Pool
 }
 
+// PgxConfig holds configuration options for the pgx store
+type PgxConfig struct {
+	// DSN is the connection string
+	DSN string
+
+	// Pool settings
+	MaxConns        int32         // Maximum connections in pool (default: 100)
+	MinConns        int32         // Minimum connections in pool (default: 10)
+	MaxConnLifetime time.Duration // Maximum connection lifetime (default: 1 hour)
+	MaxConnIdleTime time.Duration // Maximum idle time (default: 30 minutes)
+	HealthCheckPeriod time.Duration // Health check interval (default: 1 minute)
+
+	// PgBouncer compatibility
+	UsePgBouncer bool // Set to true when connecting through PgBouncer (disables prepared statements)
+}
+
 // NewStorePgx creates a new pgx-based PostgreSQL store with optimized pooling
 func NewStorePgx(ctx context.Context, dsn string) (*StorePgx, error) {
-	config, err := pgxpool.ParseConfig(dsn)
+	return NewStorePgxWithConfig(ctx, PgxConfig{
+		DSN: dsn,
+	})
+}
+
+// NewStorePgxWithConfig creates a new pgx-based PostgreSQL store with custom configuration
+func NewStorePgxWithConfig(ctx context.Context, cfg PgxConfig) (*StorePgx, error) {
+	config, err := pgxpool.ParseConfig(cfg.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse DSN: %w", err)
 	}
 
-	// Optimize connection pool for high throughput
-	config.MaxConns = 100                      // Much higher for concurrent writes
-	config.MinConns = 10                       // Keep connections warm
-	config.MaxConnLifetime = 1 * time.Hour     // Recycle connections hourly
-	config.MaxConnIdleTime = 30 * time.Minute  // Close idle connections
-	config.HealthCheckPeriod = 1 * time.Minute // Regular health checks
+	// Apply pool settings with defaults
+	if cfg.MaxConns > 0 {
+		config.MaxConns = cfg.MaxConns
+	} else {
+		config.MaxConns = 100 // Default: high throughput
+	}
+
+	if cfg.MinConns > 0 {
+		config.MinConns = cfg.MinConns
+	} else {
+		config.MinConns = 10 // Default: keep connections warm
+	}
+
+	if cfg.MaxConnLifetime > 0 {
+		config.MaxConnLifetime = cfg.MaxConnLifetime
+	} else {
+		config.MaxConnLifetime = 1 * time.Hour // Default: recycle hourly
+	}
+
+	if cfg.MaxConnIdleTime > 0 {
+		config.MaxConnIdleTime = cfg.MaxConnIdleTime
+	} else {
+		config.MaxConnIdleTime = 30 * time.Minute // Default: close idle after 30 min
+	}
+
+	if cfg.HealthCheckPeriod > 0 {
+		config.HealthCheckPeriod = cfg.HealthCheckPeriod
+	} else {
+		config.HealthCheckPeriod = 1 * time.Minute // Default: check every minute
+	}
 
 	// Performance optimizations
-	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheStatement // Use prepared statements
+	if cfg.UsePgBouncer {
+		// PgBouncer compatibility: Use simple protocol (no prepared statements)
+		// This is required when using PgBouncer in transaction or statement mode
+		config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+	} else {
+		// Direct PostgreSQL: Use prepared statements for better performance
+		config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheStatement
+	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
