@@ -63,6 +63,13 @@ type ServerConfig struct {
 	OnTaskCompleted func(ctx context.Context, task *InternalTask, duration time.Duration)
 	OnTaskFailed    func(ctx context.Context, task *InternalTask, err error)
 	OnTaskRetried   func(ctx context.Context, task *InternalTask, attempt int, nextRetry time.Time)
+
+	// Auto-cleanup for old tasks
+	EnableAutoCleanup  bool          // Enable automatic cleanup of old tasks
+	CleanupInterval    time.Duration // How often to run cleanup (default: 1 hour)
+	CleanupRetention   time.Duration // Keep tasks for this duration (default: 7 days)
+	CleanupStates      []TaskState   // States to clean (default: completed, failed, cancelled)
+	OnTasksCleaned     func(ctx context.Context, count int, states []TaskState) // Callback when cleanup runs
 }
 
 // QueueConfig configures a queue
@@ -183,6 +190,12 @@ func (s *Server) Start(ctx context.Context) error {
 	if s.config.EnableAggregation {
 		s.wg.Add(1)
 		go s.aggregationScheduler(ctx)
+	}
+
+	// Start auto-cleanup scheduler if enabled
+	if s.config.EnableAutoCleanup {
+		s.wg.Add(1)
+		go s.cleanupScheduler(ctx)
 	}
 
 	log.Printf("[Queue] Server started with %d total workers", s.totalWorkers())
@@ -395,6 +408,66 @@ func (s *Server) processAggregationGroups(ctx context.Context) {
 			}
 
 			log.Printf("[Queue] Aggregated %d tasks from group %s", len(tasks), group.GroupKey)
+		}
+	}
+}
+
+// cleanupScheduler periodically removes old completed/failed tasks
+func (s *Server) cleanupScheduler(ctx context.Context) {
+	defer s.wg.Done()
+
+	interval := s.config.CleanupInterval
+	if interval == 0 {
+		interval = 1 * time.Hour // Default: cleanup every hour
+	}
+
+	retention := s.config.CleanupRetention
+	if retention == 0 {
+		retention = 7 * 24 * time.Hour // Default: keep tasks for 7 days
+	}
+
+	states := s.config.CleanupStates
+	if len(states) == 0 {
+		// Default: cleanup completed, failed, and cancelled tasks
+		states = []TaskState{StateCompleted, StateFailed, StateCancelled}
+	}
+
+	log.Printf("[Queue] Cleanup scheduler started (interval: %v, retention: %v, states: %v)",
+		interval, retention, states)
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.performCleanup(ctx, retention, states)
+		}
+	}
+}
+
+// performCleanup deletes old tasks based on configured states
+func (s *Server) performCleanup(ctx context.Context, retention time.Duration, states []TaskState) {
+	cutoff := time.Now().Add(-retention)
+
+	log.Printf("[Queue] Starting cleanup of tasks older than %v (states: %v)", retention, states)
+
+	// Use the efficient DeleteArchivedTasks method which does batch deletion
+	// This method deletes completed, failed, and cancelled tasks in one query
+	count, err := s.store.DeleteArchivedTasks(ctx, cutoff)
+	if err != nil {
+		log.Printf("[Queue] Cleanup error: %v", err)
+		return
+	}
+
+	if count > 0 {
+		log.Printf("[Queue] Cleanup completed: removed %d tasks older than %v", count, retention)
+
+		// Callback: Tasks cleaned
+		if s.config.OnTasksCleaned != nil {
+			s.config.OnTasksCleaned(ctx, count, states)
 		}
 	}
 }

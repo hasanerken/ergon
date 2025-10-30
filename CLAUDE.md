@@ -51,6 +51,7 @@ go run examples/statistics/main.go  # Statistics and monitoring example
 - Supports middleware chain for cross-cutting concerns
 - Includes scheduler for moving scheduled tasks to available state
 - Optional aggregation scheduler for grouped tasks
+- Optional auto-cleanup scheduler for removing old completed/failed tasks
 
 **Workers** (`worker.go`)
 - Registry for type-safe worker implementations
@@ -95,7 +96,8 @@ go run examples/statistics/main.go  # Statistics and monitoring example
 
 **BatchController** (`batch.go`)
 - Bulk operations on multiple tasks
-- Methods: `CancelMany`, `DeleteByFilter`, `RetryAllFailed`, `PurgeCompleted`
+- Methods: `CancelMany`, `DeleteByFilter`, `RetryAllFailed`, `PurgeCompleted`, `PurgeFailed`
+- Cleanup helpers: `CleanupOldTasks(olderThan)` removes both completed and failed tasks
 
 **TaskStatistics** (`statistics.go`)
 - Queue metrics and analytics
@@ -132,6 +134,33 @@ Chain-of-responsibility pattern for cross-cutting concerns:
 - `MetricsMiddleware()`: Records performance metrics (template)
 
 Applied globally (ServerConfig) or per-worker (MiddlewareProvider interface).
+
+### Auto-Cleanup Configuration
+
+Server supports automatic cleanup of old completed/failed/cancelled tasks:
+
+**ServerConfig options**:
+- `EnableAutoCleanup bool`: Enable automatic cleanup (default: false)
+- `CleanupInterval time.Duration`: How often to run cleanup (default: 1 hour)
+- `CleanupRetention time.Duration`: Keep tasks for this duration (default: 7 days)
+- `CleanupStates []TaskState`: States to clean (default: completed, failed, cancelled)
+- `OnTasksCleaned func(ctx, count, states)`: Callback when cleanup runs
+
+**Example**:
+```go
+server, _ := ergon.NewServer(store, ergon.ServerConfig{
+    Workers: workers,
+    EnableAutoCleanup:  true,
+    CleanupInterval:    1 * time.Hour,   // Clean every hour
+    CleanupRetention:   7 * 24 * time.Hour, // Keep for 7 days
+})
+```
+
+**Manual cleanup alternatives**:
+- `mgr.Batch().PurgeCompleted(ctx, olderThan)` - Remove completed tasks
+- `mgr.Batch().PurgeFailed(ctx, olderThan)` - Remove failed tasks
+- `mgr.Batch().CleanupOldTasks(ctx, olderThan)` - Remove both
+- `store.DeleteArchivedTasks(ctx, before)` - Direct store access (batch deletion)
 
 ### Type Safety
 

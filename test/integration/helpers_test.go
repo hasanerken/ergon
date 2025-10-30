@@ -149,3 +149,17 @@ func AssertError(t *testing.T, err error, message string) {
 		t.Fatalf("%s: expected error but got nil", message)
 	}
 }
+
+// AssertEquals fails if actual != expected
+func AssertEquals(t *testing.T, actual, expected interface{}, message string) {
+	if actual != expected {
+		t.Fatalf("%s: expected %v, got %v", message, expected, actual)
+	}
+}
+
+// AssertTrue fails if condition is false
+func AssertTrue(t *testing.T, condition bool, message string) {
+	if !condition {
+		t.Fatalf("%s: expected true, got false", message)
+	}
+}
