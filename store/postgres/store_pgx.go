@@ -116,13 +116,14 @@ func (s *StorePgx) Enqueue(ctx context.Context, task *ergon.InternalTask) error 
 		)
 	`
 
-	var metadataJSON []byte
+	var metadataJSON *[]byte
 	var err error
 	if task.Metadata != nil {
-		metadataJSON, err = jsonutil.Marshal(task.Metadata)
-		if err != nil {
-			return fmt.Errorf("failed to marshal metadata: %w", err)
+		data, marshalErr := jsonutil.Marshal(task.Metadata)
+		if marshalErr != nil {
+			return fmt.Errorf("failed to marshal metadata: %w", marshalErr)
 		}
+		metadataJSON = &data
 	}
 
 	var intervalSeconds *int
@@ -143,7 +144,7 @@ func (s *StorePgx) Enqueue(ctx context.Context, task *ergon.InternalTask) error 
 		task.ScheduledAt,
 		task.EnqueuedAt,
 		task.Payload, // pgx handles []byte directly - no extra marshaling!
-		metadataJSON,
+		metadataJSON, // Pass as *[]byte so nil is handled correctly
 		nullStringPgx(task.UniqueKey),
 		nullStringPgx(task.GroupKey),
 		nullStringPgx(task.RateLimitScope),
